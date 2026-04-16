@@ -1,0 +1,94 @@
+# Auto-move linked issues to "In Review" when a PR is opened.
+# Copy to .github/workflows/auto-in-review.yml in your repo.
+#
+# Required setup:
+#   1. Create a personal access token (classic) with `repo` + `project` scopes
+#   2. Add it as a repository secret named PROJECT_PAT
+#   3. Replace the placeholder values below with your project's IDs
+#      (or let setup.sh fill them in automatically)
+#
+# Find your IDs:
+#   gh project list --owner <OWNER>
+#   gh project field-list <PROJECT_NUMBER> --owner <OWNER> --format json
+
+name: Auto move to In Review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+env:
+  PROJECT_NUMBER: "<PROJECT_NUMBER>"
+  PROJECT_OWNER: "<OWNER>"
+  STATUS_FIELD_ID: "<STATUS_FIELD_ID>"
+  IN_REVIEW_OPTION_ID: "<IN_REVIEW_OPTION_ID>"
+  PROJECT_ID: "<PROJECT_ID>"
+
+jobs:
+  move-to-in-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PAT is configured
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_PAT }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::PROJECT_PAT secret is not configured. Create a PAT (classic) with repo + project scopes and add it as a repository secret named PROJECT_PAT."
+            exit 1
+          fi
+
+      - name: Extract linked issue numbers
+        id: issues
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          COMBINED="$PR_TITLE $PR_BODY"
+
+          ISSUE_NUMS=$(echo "$COMBINED" \
+            | grep -ioP '(close[sd]?|fix(e[sd])?|resolve[sd]?)\s+#\K[0-9]+' \
+            | sort -u)
+
+          if [ -z "$ISSUE_NUMS" ]; then
+            echo "No linked issues found in PR"
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Found linked issues: $ISSUE_NUMS"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "numbers<<EOF" >> "$GITHUB_OUTPUT"
+            echo "$ISSUE_NUMS" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Move issues to In Review
+        if: steps.issues.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_PAT }}
+          ISSUE_NUMBERS: ${{ steps.issues.outputs.numbers }}
+          REPO: ${{ github.repository }}
+        run: |
+          while IFS= read -r ISSUE_NUM; do
+            [ -z "$ISSUE_NUM" ] && continue
+            echo "Moving issue #$ISSUE_NUM to In Review..."
+
+            # Update label
+            gh issue edit "$ISSUE_NUM" \
+              --repo "$REPO" \
+              --remove-label "stage:in-progress" \
+              --add-label "stage:in-review" 2>/dev/null || true
+
+            # Get project item ID
+            ITEM_ID=$(gh project item-list "$PROJECT_NUMBER" \
+              --owner "$PROJECT_OWNER" --format json \
+              | jq -r ".items[] | select(.content.number == $ISSUE_NUM) | .id")
+
+            if [ -n "$ITEM_ID" ] && [ "$ITEM_ID" != "null" ]; then
+              gh project item-edit --id "$ITEM_ID" \
+                --project-id "$PROJECT_ID" \
+                --field-id "$STATUS_FIELD_ID" \
+                --single-select-option-id "$IN_REVIEW_OPTION_ID"
+              echo "Issue #$ISSUE_NUM moved to In Review"
+            else
+              echo "Warning: Could not find project item for issue #$ISSUE_NUM"
+            fi
+          done <<< "$ISSUE_NUMBERS"

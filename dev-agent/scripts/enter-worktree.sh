@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage: enter-worktree.sh <name>
+# Creates a git worktree for multi-agent isolated development.
+# Prints the worktree path to stdout. Agent should `cd` into it.
+#
+# Naming: use + as separator — becomes / in the branch name.
+# Example: enter-worktree.sh feat+42-add-auth
+#   → .worktrees/feat+42-add-auth (branch: feat/42-add-auth)
+
+NAME="${1:?Usage: enter-worktree.sh <name>}"
+
+# --- Validate name (prevent path traversal and unsafe characters) ---
+if [[ "$NAME" == *..* ]] || [[ "$NAME" == /* ]] || [[ "$NAME" == *\\* ]]; then
+  echo "ERROR: Invalid worktree name '${NAME}': must not contain '..', start with '/', or contain '\\'" >&2
+  exit 1
+fi
+if [[ ${#NAME} -gt 64 ]]; then
+  echo "ERROR: Worktree name too long (${#NAME} chars, max 64)" >&2
+  exit 1
+fi
+
+# --- Resolve to MAIN repo root (critical for nested worktree safety) ---
+# If we're already inside a worktree, git rev-parse --show-toplevel returns
+# the worktree root, not the main repo. Detect this via the .git file pointer.
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+if [[ -f "${REPO_ROOT}/.git" ]]; then
+  # Inside a worktree — .git is a file (not a dir) pointing to the real git dir
+  # Format: "gitdir: /path/to/main-repo/.git/worktrees/<name>"
+  REAL_GIT_DIR="$(sed 's/^gitdir: //' "${REPO_ROOT}/.git")"
+  # Navigate up from .git/worktrees/<name> → .git → repo root
+  REPO_ROOT="$(cd "${REPO_ROOT}" && cd "$(dirname "$(dirname "$(dirname "${REAL_GIT_DIR}")")")" && pwd)"
+fi
+
+WORKTREE_DIR="${REPO_ROOT}/.worktrees"
+WORKTREE_PATH="${WORKTREE_DIR}/${NAME}"
+BRANCH_NAME="${NAME//+//}"
+
+# --- Resume existing worktree ---
+if [[ -d "${WORKTREE_PATH}" ]]; then
+  echo "Resuming existing worktree at: ${WORKTREE_PATH}" >&2
+  echo "${WORKTREE_PATH}"
+  exit 0
+fi
+
+# --- Clean stale worktree metadata before creating ---
+git -C "${REPO_ROOT}" worktree prune 2>/dev/null || true
+
+mkdir -p "${WORKTREE_DIR}"
+
+# --- Create worktree ---
+# -B: create-or-reset branch (handles orphans from prior force-removes)
+git -C "${REPO_ROOT}" worktree add -B "${BRANCH_NAME}" "${WORKTREE_PATH}" HEAD >&2
+
+# --- Post-creation: copy .worktreeinclude files ---
+# .worktreeinclude lists gitignored files that should be copied to worktrees
+# (e.g., .env, config/secrets/local.yaml). Uses .gitignore syntax.
+if [[ -f "${REPO_ROOT}/.worktreeinclude" ]]; then
+  while IFS= read -r pattern || [[ -n "$pattern" ]]; do
+    [[ -z "$pattern" || "$pattern" == \#* ]] && continue
+    while IFS= read -r file; do
+      [[ -z "$file" ]] && continue
+      dest="${WORKTREE_PATH}/${file}"
+      mkdir -p "$(dirname "$dest")"
+      cp "${REPO_ROOT}/${file}" "$dest" 2>/dev/null || true
+    done < <(cd "${REPO_ROOT}" && git ls-files --others --ignored --exclude-standard -- "$pattern" 2>/dev/null)
+  done < "${REPO_ROOT}/.worktreeinclude"
+  echo "Copied .worktreeinclude files" >&2
+fi
+
+# --- Post-creation: symlink large directories ---
+# .worktreelinks lists directories to symlink instead of duplicate (e.g., node_modules)
+if [[ -f "${REPO_ROOT}/.worktreelinks" ]]; then
+  while IFS= read -r dir || [[ -n "$dir" ]]; do
+    [[ -z "$dir" || "$dir" == \#* ]] && continue
+    src="${REPO_ROOT}/${dir}"
+    dest="${WORKTREE_PATH}/${dir}"
+    if [[ -d "$src" && ! -e "$dest" ]]; then
+      ln -s "$src" "$dest" 2>/dev/null && echo "Symlinked ${dir}" >&2 || true
+    fi
+  done < "${REPO_ROOT}/.worktreelinks"
+fi
+
+echo "Created worktree: ${WORKTREE_PATH} (branch: ${BRANCH_NAME})" >&2
+echo "${WORKTREE_PATH}"

@@ -1,0 +1,90 @@
+# Enforce WIP limits by failing the check when columns are over capacity.
+# Copy to .github/workflows/wip-limit-check.yml in your repo.
+#
+# Required setup:
+#   1. Create a personal access token (classic) with `repo` + `project` scopes
+#   2. Add it as a repository secret named PROJECT_PAT
+#   3. Replace the placeholder values below with your project's IDs
+#      (or let setup.sh fill them in automatically)
+#   4. (Optional) Enable branch protection requiring this check to pass
+#
+# Find your IDs:
+#   gh project list --owner <OWNER>
+#   gh project field-list <PROJECT_NUMBER> --owner <OWNER> --format json
+
+name: WIP Limit Check
+
+on:
+  issues:
+    types: [labeled]
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+env:
+  PROJECT_NUMBER: "<PROJECT_NUMBER>"
+  PROJECT_OWNER: "<OWNER>"
+  # WIP limits — adjust these to match your workflow
+  WIP_LIMIT_BACKLOG: "10"
+  WIP_LIMIT_IN_PROGRESS: "3"
+  WIP_LIMIT_IN_REVIEW: "5"
+
+jobs:
+  check-wip-limits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PAT is configured
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_PAT }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::PROJECT_PAT secret is not configured. Create a PAT (classic) with repo + project scopes and add it as a repository secret named PROJECT_PAT."
+            exit 1
+          fi
+
+      - name: Check WIP limits
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          FAILED=false
+
+          # Check In Progress
+          IN_PROGRESS=$(gh issue list --repo "$REPO" \
+            --label "stage:in-progress" --state open \
+            --json number --jq 'length')
+          echo "In Progress: $IN_PROGRESS / $WIP_LIMIT_IN_PROGRESS"
+          if [ "$IN_PROGRESS" -gt "$WIP_LIMIT_IN_PROGRESS" ]; then
+            echo "::error::WIP limit exceeded: In Progress has $IN_PROGRESS items (limit: $WIP_LIMIT_IN_PROGRESS)"
+            FAILED=true
+          fi
+
+          # Check Backlog
+          BACKLOG=$(gh issue list --repo "$REPO" \
+            --label "stage:backlog" --state open \
+            --json number --jq 'length')
+          echo "Backlog: $BACKLOG / $WIP_LIMIT_BACKLOG"
+          if [ "$BACKLOG" -gt "$WIP_LIMIT_BACKLOG" ]; then
+            echo "::error::WIP limit exceeded: Backlog has $BACKLOG items (limit: $WIP_LIMIT_BACKLOG)"
+            FAILED=true
+          fi
+
+          # Check In Review
+          IN_REVIEW=$(gh issue list --repo "$REPO" \
+            --label "stage:in-review" --state open \
+            --json number --jq 'length')
+          echo "In Review: $IN_REVIEW / $WIP_LIMIT_IN_REVIEW"
+          if [ "$IN_REVIEW" -gt "$WIP_LIMIT_IN_REVIEW" ]; then
+            echo "::error::WIP limit exceeded: In Review has $IN_REVIEW items (limit: $WIP_LIMIT_IN_REVIEW)"
+            FAILED=true
+          fi
+
+          if [ "$FAILED" = true ]; then
+            echo ""
+            echo "Summary:"
+            echo "  Backlog:     $BACKLOG / $WIP_LIMIT_BACKLOG"
+            echo "  In Progress: $IN_PROGRESS / $WIP_LIMIT_IN_PROGRESS"
+            echo "  In Review:   $IN_REVIEW / $WIP_LIMIT_IN_REVIEW"
+            exit 1
+          fi
+
+          echo "All WIP limits OK"

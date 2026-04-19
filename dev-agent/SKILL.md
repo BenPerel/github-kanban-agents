@@ -214,10 +214,25 @@ EOF
 )"
 ```
 
+### Wait for CI Checks
+
+After creating the PR, you must wait for the remote CI checks to pass before transitioning the issue:
+
+1. Run `gh pr checks --watch` to block the terminal until remote CI workflows finish.
+2. **If checks fail**:
+   - Do NOT exit the worktree.
+   - Do NOT move the issue to `stage:in-review`.
+   - Read the failing CI logs (e.g., using `gh run view --log-failed`).
+   - Fix the code locally.
+   - Commit the changes and `git push`.
+   - Run `gh pr checks --watch` again.
+   - Repeat this loop until all checks are green.
+3. Only once `gh pr checks` returns successfully are you permitted to proceed.
+
 ### Move to In Review
 
 Use `/github-kanban` to move the issue from `stage:in-progress` to
-`stage:in-review` — **unless** the project has the `auto-in-review.yml` workflow
+`stage:in-review` (only after CI is green) — **unless** the project has the `auto-in-review.yml` workflow
 installed, which does this automatically on PR creation. To detect it:
 
 ```bash

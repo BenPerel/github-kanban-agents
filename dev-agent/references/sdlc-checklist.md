@@ -87,7 +87,11 @@ to Human Review (mid-dev) with details on what's failing and why.
   - Body contains `Closes #<issue-number>` for auto-close on merge
   - Body is **self-contained** — the review agent has zero shared context
   - Include: Summary, Changes, Testing, Grounding sources, Follow-ups
-- [ ] Move issue to `stage:in-review` via `/github-kanban`
+- [ ] **Wait for remote CI checks**:
+  - Run `gh pr checks --watch`.
+  - If checks fail: Read logs (`gh run view --log-failed`), fix, commit, `git push`, and loop back to `gh pr checks --watch` until green.
+  - Do NOT exit the worktree or move the issue to `stage:in-review` until CI is green.
+- [ ] Move issue to `stage:in-review` via `/github-kanban` (only after CI is green)
   - If the project has `auto-in-review.yml` GitHub Action, skip manual move
 - [ ] **NEVER merge. NEVER approve own PR.**
 

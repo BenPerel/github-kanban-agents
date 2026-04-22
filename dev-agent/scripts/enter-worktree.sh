@@ -49,9 +49,30 @@ git -C "${REPO_ROOT}" worktree prune 2>/dev/null || true
 
 mkdir -p "${WORKTREE_DIR}"
 
+# --- Determine the main branch ref ---
+# Fetch latest and resolve origin's default branch for the worktree base.
+# This ensures new branches always fork from the main integration branch,
+# not from whatever HEAD happens to be checked out (which may be a stale
+# feature branch — causing gh pr create to infer the wrong base).
+git -C "${REPO_ROOT}" fetch origin 2>/dev/null || true
+DEFAULT_BRANCH="$(git -C "${REPO_ROOT}" symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/||')" || true
+if [[ -z "${DEFAULT_BRANCH}" ]]; then
+  # origin/HEAD not set (common after manual clone). Try common names.
+  for candidate in origin/main origin/master; do
+    if git -C "${REPO_ROOT}" rev-parse --verify "${candidate}" >/dev/null 2>&1; then
+      DEFAULT_BRANCH="${candidate}"
+      break
+    fi
+  done
+fi
+if [[ -z "${DEFAULT_BRANCH}" ]]; then
+  echo "ERROR: Cannot determine default branch. Run 'git remote set-head origin -a' or ensure origin/main exists." >&2
+  exit 1
+fi
+
 # --- Create worktree ---
 # -B: create-or-reset branch (handles orphans from prior force-removes)
-git -C "${REPO_ROOT}" worktree add -B "${BRANCH_NAME}" "${WORKTREE_PATH}" HEAD >&2
+git -C "${REPO_ROOT}" worktree add -B "${BRANCH_NAME}" "${WORKTREE_PATH}" "${DEFAULT_BRANCH}" >&2
 
 # --- Post-creation: copy .worktreeinclude files ---
 # .worktreeinclude lists gitignored files that should be copied to worktrees

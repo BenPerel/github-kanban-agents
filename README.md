@@ -154,6 +154,10 @@ The kanban skill is designed for safety and controlled autonomy. It ships with a
 ## Worktree Configuration (Optional)
 
 The dev-agent and review-agent skills use git worktrees for multi-agent isolation.
+Worktrees are placed in a **sibling directory** (`../{repo-name}-worktrees/`) rather
+than inside the repo, preventing tool interference (pytest conftest leakage, ESLint
+config bleed, file watcher loops, Docker context bloat). Requires **Git 2.48+**.
+
 Two optional config files control how worktrees behave:
 
 - **`.worktreeinclude`** — List gitignored files to copy into new worktrees (uses .gitignore syntax).

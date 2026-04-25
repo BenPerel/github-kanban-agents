@@ -174,20 +174,23 @@ echo "Labels updated: ${FROM_STAGE_LABEL:-none} → $TO_STAGE_LABEL" >&2
 # --- Update board status ---
 ITEM_ID=$(gh project item-list "$PROJECT_NUMBER" --owner "$OWNER" --format json \
   | jq -r --argjson num "$ISSUE" '.items[] | select(.content.number == $num) | .id') || {
-  echo "WARNING: Failed to get project item ID" >&2
+  echo "ERROR: Failed to query project board items" >&2
+  exit 2
 }
 
-if [ -n "$ITEM_ID" ]; then
-  gh project item-edit --id "$ITEM_ID" \
-    --project-id "$PROJECT_ID" \
-    --field-id "$STATUS_FIELD_ID" \
-    --single-select-option-id "$TO_OPTION_ID" >/dev/null 2>&1 || {
-    echo "WARNING: Failed to update board status" >&2
-  }
-  echo "Board updated: $TO_STAGE" >&2
-else
-  echo "WARNING: Issue not found on project board — labels updated but board status unchanged" >&2
+if [ -z "$ITEM_ID" ]; then
+  echo "ERROR: Issue #$ISSUE not found on project board — labels updated but board status unchanged" >&2
+  exit 2
 fi
+
+gh project item-edit --id "$ITEM_ID" \
+  --project-id "$PROJECT_ID" \
+  --field-id "$STATUS_FIELD_ID" \
+  --single-select-option-id "$TO_OPTION_ID" 2>&1 || {
+  echo "ERROR: Failed to update board status for issue #$ISSUE" >&2
+  exit 2
+}
+echo "Board updated: $TO_STAGE" >&2
 
 # --- JSON output ---
 jq -n \

@@ -193,7 +193,7 @@ The PR is the **prompt for the review agent**. Write it so that an agent with
 zero context can understand and review the changes.
 
 ```bash
-gh pr create --title "<type>(<scope>): <short description>" --body "$(cat <<'EOF'
+gh pr create --base main --title "<type>(<scope>): <short description>" --body "$(cat <<'EOF'
 Closes #<issue-number>
 
 ## Summary

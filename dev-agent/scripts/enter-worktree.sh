@@ -46,7 +46,7 @@ if [[ -d "${WORKTREE_PATH}" ]]; then
 fi
 
 # --- Require Git 2.48+ for --relative-paths ---
-GIT_VERSION="$(git --version | grep -oP '\d+\.\d+\.\d+' | head -1)"
+GIT_VERSION="$(git --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
 GIT_MAJOR="${GIT_VERSION%%.*}"
 GIT_MINOR="${GIT_VERSION#*.}"; GIT_MINOR="${GIT_MINOR%%.*}"
 if [[ "${GIT_MAJOR}" -lt 2 ]] || [[ "${GIT_MAJOR}" -eq 2 && "${GIT_MINOR}" -lt 48 ]]; then

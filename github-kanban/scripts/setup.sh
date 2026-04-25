@@ -216,6 +216,10 @@ OUTPUT_FILE_AGENTS="$OUTPUT_DIR_AGENTS/SKILL.md"
 mkdir -p "$OUTPUT_DIR_AGENTS"
 
 # Generate the canonical SKILL.md in the agents directory
+# Write to a temp file first to avoid clobbering when $TEMPLATE and
+# $OUTPUT_FILE_AGENTS resolve to the same path (e.g. npx install puts
+# the template at .agents/skills/github-kanban/SKILL.md).
+TMPFILE=$(mktemp)
 sed \
   -e "s|<REPO>|$REPO|g" \
   -e "s|<PROJECT_NAME>|$PROJECT_NAME|g" \
@@ -240,7 +244,8 @@ sed \
   -e "s|<M_OPTION_ID>|$M_OPTION_ID|g" \
   -e "s|<L_OPTION_ID>|$L_OPTION_ID|g" \
   -e "s|<XL_OPTION_ID>|$XL_OPTION_ID|g" \
-  "$TEMPLATE" > "$OUTPUT_FILE_AGENTS"
+  "$TEMPLATE" > "$TMPFILE"
+mv "$TMPFILE" "$OUTPUT_FILE_AGENTS"
 
 # Copy to Claude skills — skip if npx skills already created a symlink
 # (the symlink points to .agents/skills/github-kanban/ which we already updated)

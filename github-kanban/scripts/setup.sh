@@ -451,13 +451,6 @@ echo "  3. Enable these workflows:"
 echo "     - 'Item closed' → Set status to 'Done'"
 echo "     - 'Pull request merged' → Set status to 'Done'"
 echo "     - (Optional) 'Item reopened' → Set status to 'In progress'"
-# --- Ensure .worktrees/ is gitignored ---
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-GITIGNORE="${REPO_ROOT}/.gitignore"
-if ! grep -qxF '.worktrees/' "$GITIGNORE" 2>/dev/null; then
-  echo '.worktrees/' >> "$GITIGNORE"
-  echo "✓ Added .worktrees/ to .gitignore"
-fi
 
 echo ""
 echo "=== Setup Complete ==="

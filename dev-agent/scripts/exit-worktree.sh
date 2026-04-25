@@ -7,28 +7,33 @@ set -euo pipefail
 
 ACTION="${1:?Usage: exit-worktree.sh <keep|remove> [name]}"
 
-# --- Auto-detect worktree name from CWD ---
-if [[ -n "${2:-}" ]]; then
-  NAME="$2"
-else
-  CWD="$(pwd)"
-  if [[ "$CWD" == */.worktrees/* ]]; then
-    NAME="${CWD#*/.worktrees/}"
-    NAME="${NAME%%/*}"
-  else
-    echo "ERROR: Not inside a .worktrees/ directory and no name provided" >&2
-    exit 1
-  fi
-fi
-
-# --- Resolve to main repo root (handles being inside a worktree) ---
+# --- Resolve to main repo root first (needed to derive WORKTREE_DIR) ---
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 if [[ -f "${REPO_ROOT}/.git" ]]; then
   REAL_GIT_DIR="$(sed 's/^gitdir: //' "${REPO_ROOT}/.git")"
   REPO_ROOT="$(cd "${REPO_ROOT}" && cd "$(dirname "$(dirname "$(dirname "${REAL_GIT_DIR}")")")" && pwd)"
 fi
 
-WORKTREE_PATH="${REPO_ROOT}/.worktrees/${NAME}"
+REPO_NAME="$(basename "${REPO_ROOT}")"
+WORKTREE_DIR="$(dirname "${REPO_ROOT}")/${REPO_NAME}-worktrees"
+
+# --- Auto-detect worktree name from CWD ---
+if [[ -n "${2:-}" ]]; then
+  NAME="$2"
+else
+  CWD="$(pwd)"
+  if [[ "${CWD}" == "${WORKTREE_DIR}/"* ]]; then
+    RELATIVE="${CWD#"${WORKTREE_DIR}/"}"
+    NAME="${RELATIVE%%/*}"
+  else
+    echo "ERROR: Not inside a worktree directory and no name provided" >&2
+    echo "  CWD:         ${CWD}" >&2
+    echo "  Expected in: ${WORKTREE_DIR}/" >&2
+    exit 1
+  fi
+fi
+
+WORKTREE_PATH="${WORKTREE_DIR}/${NAME}"
 BRANCH_NAME="${NAME//+//}"
 
 case "${ACTION}" in
@@ -49,17 +54,15 @@ case "${ACTION}" in
       fi
     fi
 
-    # Remove worktree
-    git -C "${REPO_ROOT}" worktree remove --force "${WORKTREE_PATH}" 2>/dev/null || true
-
-    # Sleep to let git release lock files (matches Claude Code behavior)
-    sleep 0.1
-
-    # Delete the branch
-    git -C "${REPO_ROOT}" branch -D "${BRANCH_NAME}" 2>/dev/null || true
-
-    # Prune stale worktree metadata
-    git -C "${REPO_ROOT}" worktree prune 2>/dev/null || true
+    # Remove worktree (serialized via flock)
+    LOCKFILE="${WORKTREE_DIR}/.worktree.lock"
+    (
+      flock -w 30 9 || { echo "ERROR: Timed out waiting for worktree lock" >&2; exit 1; }
+      git -C "${REPO_ROOT}" worktree remove --force "${WORKTREE_PATH}" 2>/dev/null || true
+      sleep 0.1
+      git -C "${REPO_ROOT}" branch -D "${BRANCH_NAME}" 2>/dev/null || true
+      git -C "${REPO_ROOT}" worktree prune 2>/dev/null || true
+    ) 9>"${LOCKFILE}"
 
     echo "Removed worktree and branch '${BRANCH_NAME}'" >&2
     echo "${REPO_ROOT}"

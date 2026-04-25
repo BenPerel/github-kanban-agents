@@ -12,6 +12,15 @@ with its own branch. The main checkout stays on `main`.
   the worktree. Never create a worktree for an unclaimed issue — you risk
   orphaned worktrees if claiming fails later.
 
+### Git Version Requirement
+
+`enter-worktree.sh` requires Git 2.48 or later for `--relative-paths` support.
+This flag stores worktree paths relative to the main git directory, preventing
+breakage if the repository is relocated. The script will error immediately if
+the installed git version is below 2.48.
+
+Verify: `git --version`
+
 ### Procedure
 
 1. Run the portable worktree script:
@@ -45,15 +54,15 @@ with its own branch. The main checkout stays on `main`.
 - **Development commands** may need path adjustments. Some projects require
   running from the parent directory (e.g., `uv run uvicorn modeldebate.app:app`
   from the workspace root, not the repo root). Check the project conventions file for details.
-- **Running tests**: If worktrees are nested inside the repo (e.g.,
-  `.worktrees/<branch>/`), do NOT `cd` into the worktree and run
-  `pytest` from there. Pytest's upward conftest discovery will find and
-  load conftest files from both the worktree AND the parent repo, causing
-  mock conflicts and false test failures. Instead, run from the workspace
-  root and pass the worktree's test directory as an argument:
+- **Running tests**: Worktrees are placed in a sibling directory outside the
+  repo (e.g., `../{repo-name}-worktrees/{branch}/`), so pytest's upward
+  conftest discovery will not walk into the main repo. Run `pytest` normally
+  from inside the worktree:
   ```bash
-  uv run python -m pytest path/to/worktree/tests/ -v
+  uv run python -m pytest . -v
   ```
+  ESLint config inheritance and file watcher scopes are similarly isolated
+  by the sibling placement.
 - **Stay in scope**: Only modify files related to your issue. Other agents
   may be working on other files in their own worktrees. Touching shared
   files creates merge conflicts.
@@ -118,10 +127,31 @@ If step 3 fails because the label was already changed:
 **Worst case**: Duplicate PRs from the TOCTOU window — the review agent
 detects and resolves this. Acceptable tradeoff vs. distributed locking.
 
+## Concurrency
+
+Worktree lifecycle operations (`git worktree add`, `remove`, `prune`,
+`branch -D`) are serialized via `flock` on a shared lockfile at
+`../{repo-name}-worktrees/.worktree.lock`. Multiple agents can safely
+create and destroy worktrees concurrently — the lock prevents metadata
+corruption.
+
+**Safe in parallel** (each worktree has an isolated index):
+- `git add`, `git status`, `git diff` — per-worktree staging area
+- File reads and writes within the worktree directory
+
+**Must be serialized by the orchestrator** (modify shared refs in `.git/`):
+- `git commit` — writes to `refs/heads/<branch>` in the shared `.git/` dir
+- `git push` — concurrent pushes to the same remote branch will conflict
+- `git fetch` with prune — can delete refs another agent is using
+- `git rebase` — particularly dangerous; must hold exclusive access
+
+No enforcement mechanism is implemented for agent-level git operations.
+Serialization of `commit`/`push`/`fetch` is the orchestrator's responsibility.
+
 ## Orphan Detection
 
 If a session dies unexpectedly mid-work:
-- The worktree remains on disk under `.worktrees/`
+- The worktree remains on disk under `../{repo-name}-worktrees/`
 - The issue stays in `stage:in-progress` with no PR
 - The branch exists but may have incomplete commits
 

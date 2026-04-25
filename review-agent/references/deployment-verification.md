@@ -199,11 +199,11 @@ Failure diagnosed?
 
 ### When the agent fixes a deployment failure
 
-1. Create a worktree on the `main` branch (the PR branch was deleted):
+1. Create a worktree for the hotfix:
    ```bash
-   git fetch origin main
-   git worktree add .worktrees/deploy-fix-<ISSUE> main
-   cd .worktrees/deploy-fix-<ISSUE>
+   WORKTREE=$(bash .agents/skills/dev-agent/scripts/enter-worktree.sh "fix+<ISSUE>-deploy-fix")
+   cd "$WORKTREE"
+   git fetch origin main && git reset --hard origin/main
    ```
 2. Make the fix, commit with `fix(<scope>): <description>`
 3. Push directly to `main` (this is a hotfix for a broken deploy)

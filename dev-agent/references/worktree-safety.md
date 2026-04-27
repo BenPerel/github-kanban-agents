@@ -176,6 +176,32 @@ A human or future agent can find orphans by:
    (the enter-worktree.sh script does this automatically before creating
    new worktrees, but manual cleanup may also be needed after crashes)
 
+## Antigravity / go-git Compatibility
+
+Antigravity's embedded go-git dependency does not support Git 2.48+
+`extensions.relativeWorktrees`. If a repository has
+`extensions.relativeWorktrees = true` in its `.git/config`, go-git rejects
+`core.repositoryformatversion = 1` and Antigravity crashes with
+`workspace infos is nil`.
+
+The worktree scripts (`enter-worktree.sh`, `exit-worktree.sh`) **automatically
+detect and remove** this extension, resetting `repositoryformatversion` to `0`.
+No manual action is needed — the fix runs transparently on each worktree
+operation.
+
+If you see warnings about removing `relativeWorktrees`, this is expected.
+Worktrees still function correctly with absolute paths (the Git default prior
+to 2.48). The only trade-off is that worktree `.git` file entries use absolute
+paths instead of relative ones — this has no functional impact for agent
+workflows.
+
+**Manual fix** (if needed outside of these scripts):
+
+```bash
+git config --unset extensions.relativeWorktrees
+git config core.repositoryformatversion 0
+```
+
 ## Never Do
 
 - Never create a worktree before claiming the issue — risk of orphaned worktrees

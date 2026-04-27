@@ -156,7 +156,7 @@ The kanban skill is designed for safety and controlled autonomy. It ships with a
 The dev-agent and review-agent skills use git worktrees for multi-agent isolation.
 Worktrees are placed in a **sibling directory** (`../{repo-name}-worktrees/`) rather
 than inside the repo, preventing tool interference (pytest conftest leakage, ESLint
-config bleed, file watcher loops, Docker context bloat). Requires **Git 2.48+**.
+config bleed, file watcher loops, Docker context bloat).
 
 Two optional config files control how worktrees behave:
 
@@ -177,6 +177,21 @@ Example `.worktreelinks`:
 node_modules
 .venv
 ```
+
+## Known Limitations
+
+### Antigravity + Git 2.48+ relative worktrees
+
+Antigravity's embedded go-git dependency does not support `extensions.relativeWorktrees` (introduced in Git 2.48). If your repo has `extensions.relativeWorktrees = true` in `.git/config`, Antigravity will crash with `workspace infos is nil`.
+
+The worktree scripts automatically detect and fix this by removing the extension and resetting `core.repositoryformatversion` to `0`. If you need a manual fix:
+
+```bash
+git config --unset extensions.relativeWorktrees
+git config core.repositoryformatversion 0
+```
+
+Worktrees continue to function normally — the only difference is absolute vs relative paths in worktree metadata, which has no functional impact.
 
 ## License
 

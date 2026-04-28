@@ -33,6 +33,19 @@ if [[ -f "${REPO_ROOT}/.git" ]]; then
   REPO_ROOT="$(cd "${REPO_ROOT}" && cd "$(dirname "$(dirname "$(dirname "${REAL_GIT_DIR}")")")" && pwd)"
 fi
 
+# --- Fix compatibility with git libraries that reject extensions.relativeWorktrees ---
+# Some embedded git libraries do not support this Git 2.48+ extension and reject
+# repositoryformatversion=1 when it is present. Auto-downgrade to restore compatibility.
+if git -C "${REPO_ROOT}" config --get extensions.relativeWorktrees &>/dev/null; then
+  echo "WARNING: Detected extensions.relativeWorktrees — removing for embedded git library compatibility" >&2
+  git -C "${REPO_ROOT}" config --unset extensions.relativeWorktrees 2>/dev/null || true
+  FMT_VER=$(git -C "${REPO_ROOT}" config --get core.repositoryformatversion 2>/dev/null || echo "0")
+  if [[ "$FMT_VER" == "1" ]]; then
+    git -C "${REPO_ROOT}" config core.repositoryformatversion 0
+    echo "WARNING: Reset core.repositoryformatversion from 1 to 0" >&2
+  fi
+fi
+
 REPO_NAME="$(basename "${REPO_ROOT}")"
 WORKTREE_DIR="$(dirname "${REPO_ROOT}")/${REPO_NAME}-worktrees"
 WORKTREE_PATH="${WORKTREE_DIR}/${NAME}"
@@ -45,15 +58,8 @@ if [[ -d "${WORKTREE_PATH}" ]]; then
   exit 0
 fi
 
-# --- Require Git 2.48+ for --relative-paths ---
-GIT_VERSION="$(git --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
-GIT_MAJOR="${GIT_VERSION%%.*}"
-GIT_MINOR="${GIT_VERSION#*.}"; GIT_MINOR="${GIT_MINOR%%.*}"
-if [[ "${GIT_MAJOR}" -lt 2 ]] || [[ "${GIT_MAJOR}" -eq 2 && "${GIT_MINOR}" -lt 48 ]]; then
-  echo "ERROR: Git 2.48+ required for --relative-paths (found ${GIT_VERSION})" >&2
-  echo "Upgrade git before using sibling worktrees." >&2
-  exit 1
-fi
+# --- Clean stale worktree metadata before creating ---
+git -C "${REPO_ROOT}" worktree prune 2>/dev/null || true
 
 mkdir -p "${WORKTREE_DIR}"
 
@@ -83,8 +89,7 @@ fi
 LOCKFILE="${WORKTREE_DIR}/.worktree.lock"
 (
   flock -w 30 9 || { echo "ERROR: Timed out waiting for worktree lock" >&2; exit 1; }
-  git -C "${REPO_ROOT}" worktree prune 2>/dev/null || true
-  git -C "${REPO_ROOT}" worktree add --relative-paths -B "${BRANCH_NAME}" "${WORKTREE_PATH}" "${DEFAULT_BRANCH}" >&2
+  git -C "${REPO_ROOT}" worktree add -B "${BRANCH_NAME}" "${WORKTREE_PATH}" "${DEFAULT_BRANCH}" >&2
 ) 9>"${LOCKFILE}"
 
 # --- Post-creation: copy .worktreeinclude files ---

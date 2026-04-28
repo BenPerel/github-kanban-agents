@@ -14,6 +14,17 @@ if [[ -f "${REPO_ROOT}/.git" ]]; then
   REPO_ROOT="$(cd "${REPO_ROOT}" && cd "$(dirname "$(dirname "$(dirname "${REAL_GIT_DIR}")")")" && pwd)"
 fi
 
+# --- Fix compatibility with git libraries that reject extensions.relativeWorktrees ---
+if git -C "${REPO_ROOT}" config --get extensions.relativeWorktrees &>/dev/null; then
+  echo "WARNING: Detected extensions.relativeWorktrees — removing for embedded git library compatibility" >&2
+  git -C "${REPO_ROOT}" config --unset extensions.relativeWorktrees 2>/dev/null || true
+  FMT_VER=$(git -C "${REPO_ROOT}" config --get core.repositoryformatversion 2>/dev/null || echo "0")
+  if [[ "$FMT_VER" == "1" ]]; then
+    git -C "${REPO_ROOT}" config core.repositoryformatversion 0
+    echo "WARNING: Reset core.repositoryformatversion from 1 to 0" >&2
+  fi
+fi
+
 REPO_NAME="$(basename "${REPO_ROOT}")"
 WORKTREE_DIR="$(dirname "${REPO_ROOT}")/${REPO_NAME}-worktrees"
 

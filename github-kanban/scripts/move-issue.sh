@@ -186,7 +186,7 @@ fi
 gh project item-edit --id "$ITEM_ID" \
   --project-id "$PROJECT_ID" \
   --field-id "$STATUS_FIELD_ID" \
-  --single-select-option-id "$TO_OPTION_ID" 2>&1 || {
+  --single-select-option-id "$TO_OPTION_ID" || {
   echo "ERROR: Failed to update board status for issue #$ISSUE" >&2
   exit 2
 }

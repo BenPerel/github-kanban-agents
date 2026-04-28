@@ -82,7 +82,7 @@ to Human Review (mid-dev) with details on what's failing and why.
 ## PR Creation
 
 - [ ] Push branch: `git push -u origin <branch-name>`
-- [ ] Create PR with `gh pr create --base main`:
+- [ ] Create PR with `gh pr create --base <default-branch>` (resolve via `git symbolic-ref refs/remotes/origin/HEAD`):
   - Title: `<type>(<scope>): <short description>` (under 70 chars)
   - Body contains `Closes #<issue-number>` for auto-close on merge
   - Body is **self-contained** — the review agent has zero shared context

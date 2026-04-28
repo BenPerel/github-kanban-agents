@@ -193,7 +193,8 @@ The PR is the **prompt for the review agent**. Write it so that an agent with
 zero context can understand and review the changes.
 
 ```bash
-gh pr create --base main --title "<type>(<scope>): <short description>" --body "$(cat <<'EOF'
+DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo "main")
+gh pr create --base "$DEFAULT_BRANCH" --title "<type>(<scope>): <short description>" --body "$(cat <<'EOF'
 Closes #<issue-number>
 
 ## Summary

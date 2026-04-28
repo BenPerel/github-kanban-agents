@@ -220,6 +220,7 @@ mkdir -p "$OUTPUT_DIR_AGENTS"
 # $OUTPUT_FILE_AGENTS resolve to the same path (e.g. npx install puts
 # the template at .agents/skills/github-kanban/SKILL.md).
 TMPFILE=$(mktemp)
+trap 'rm -f "$TMPFILE"' EXIT
 sed \
   -e "s|<REPO>|$REPO|g" \
   -e "s|<PROJECT_NAME>|$PROJECT_NAME|g" \

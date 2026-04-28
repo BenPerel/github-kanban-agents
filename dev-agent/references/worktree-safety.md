@@ -12,14 +12,14 @@ with its own branch. The main checkout stays on `main`.
   the worktree. Never create a worktree for an unclaimed issue — you risk
   orphaned worktrees if claiming fails later.
 
-### Git Version Requirement
+### Git Version Compatibility
 
-`enter-worktree.sh` requires Git 2.48 or later for `--relative-paths` support.
-This flag stores worktree paths relative to the main git directory, preventing
-breakage if the repository is relocated. The script will error immediately if
-the installed git version is below 2.48.
-
-Verify: `git --version`
+`enter-worktree.sh` works with any modern Git version. The `--relative-paths`
+flag (Git 2.48+) is not used because some embedded git libraries do not support
+the `extensions.relativeWorktrees` repository format extension it enables.
+Worktrees use absolute paths instead, which is the default Git behavior.
+If the repo already has `extensions.relativeWorktrees` set (e.g., from a
+prior `git worktree add --relative-paths`), the scripts auto-remove it.
 
 ### Procedure
 
@@ -176,13 +176,13 @@ A human or future agent can find orphans by:
    (the enter-worktree.sh script does this automatically before creating
    new worktrees, but manual cleanup may also be needed after crashes)
 
-## Antigravity / go-git Compatibility
+## Embedded Git Library Compatibility
 
-Antigravity's embedded go-git dependency does not support Git 2.48+
+Some tools embed git libraries that do not support Git 2.48+
 `extensions.relativeWorktrees`. If a repository has
-`extensions.relativeWorktrees = true` in its `.git/config`, go-git rejects
-`core.repositoryformatversion = 1` and Antigravity crashes with
-`workspace infos is nil`.
+`extensions.relativeWorktrees = true` in its `.git/config`, these libraries
+reject `core.repositoryformatversion = 1` and the tool crashes when opening
+the repository.
 
 The worktree scripts (`enter-worktree.sh`, `exit-worktree.sh`) **automatically
 detect and remove** this extension, resetting `repositoryformatversion` to `0`.

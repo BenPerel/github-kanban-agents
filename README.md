@@ -180,9 +180,9 @@ node_modules
 
 ## Known Limitations
 
-### Antigravity + Git 2.48+ relative worktrees
+### Git 2.48+ `extensions.relativeWorktrees`
 
-Antigravity's embedded go-git dependency does not support `extensions.relativeWorktrees` (introduced in Git 2.48). If your repo has `extensions.relativeWorktrees = true` in `.git/config`, Antigravity will crash with `workspace infos is nil`.
+Some tools embed git libraries that do not support `extensions.relativeWorktrees` (introduced in Git 2.48). If your repo has `extensions.relativeWorktrees = true` in `.git/config`, these tools may crash when opening the repository.
 
 The worktree scripts automatically detect and fix this by removing the extension and resetting `core.repositoryformatversion` to `0`. If you need a manual fix:
 

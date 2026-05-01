@@ -15,6 +15,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
+
 # --- Help ---
 show_help() {
   sed -n '2,/^$/{ s/^# \?//; p }' "$0"
@@ -29,23 +33,6 @@ if [[ "${1:-}" == "--help" ]]; then
   show_help
   exit 0
 fi
-
-# --- Locate config ---
-find_config() {
-  if [ -n "${CONFIG_PATH:-}" ]; then
-    echo "$CONFIG_PATH"
-    return
-  fi
-  local root
-  root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "ERROR: Not in a git repo" >&2; exit 1; }
-  local config="$root/.kanban-config.json"
-  if [ ! -f "$config" ]; then
-    echo "ERROR: .kanban-config.json not found at $config" >&2
-    echo "Run setup.sh first to generate it." >&2
-    exit 1
-  fi
-  echo "$config"
-}
 
 # --- Parse arguments ---
 KEEP=10

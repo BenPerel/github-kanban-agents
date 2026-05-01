@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: exit-worktree.sh <keep|remove> [name]
+# Usage: exit-worktree.sh <keep|remove> [--dry-run] [name]
 # If 'name' is omitted, auto-detects from CWD.
 # Prints the repo root to stdout. Agent should `cd` into it.
 
-ACTION="${1:?Usage: exit-worktree.sh <keep|remove> [name]}"
+ACTION="${1:?Usage: exit-worktree.sh <keep|remove> [--dry-run] [name]}"
+shift
+
+DRY_RUN=false
+if [[ "${1:-}" == "--dry-run" ]]; then
+  DRY_RUN=true
+  shift
+fi
 
 # --- Resolve to main repo root first (needed to derive WORKTREE_DIR) ---
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -29,8 +36,8 @@ REPO_NAME="$(basename "${REPO_ROOT}")"
 WORKTREE_DIR="$(dirname "${REPO_ROOT}")/${REPO_NAME}-worktrees"
 
 # --- Auto-detect worktree name from CWD ---
-if [[ -n "${2:-}" ]]; then
-  NAME="$2"
+if [[ -n "${1:-}" ]]; then
+  NAME="$1"
 else
   CWD="$(pwd)"
   if [[ "${CWD}" == "${WORKTREE_DIR}/"* ]]; then
@@ -54,6 +61,13 @@ case "${ACTION}" in
     echo "${REPO_ROOT}"
     ;;
   remove)
+    if [ "$DRY_RUN" = true ]; then
+      echo "DRY RUN: Would remove worktree at ${WORKTREE_PATH}" >&2
+      echo "DRY RUN: Would delete branch '${BRANCH_NAME}'" >&2
+      echo "${REPO_ROOT}"
+      exit 0
+    fi
+
     # Safety: refuse if uncommitted changes exist
     if [[ -d "${WORKTREE_PATH}" ]]; then
       CHANGES=$(git -C "${WORKTREE_PATH}" status --porcelain 2>/dev/null | wc -l || echo "0")

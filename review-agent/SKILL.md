@@ -12,7 +12,7 @@ description: >
   "/review-agent", "/review-agent #15", "what needs reviewing".
   Use this skill ANY TIME the user wants autonomous PR review,
   whether a specific issue number or auto-picked from the board.
-compatibility: "Requires gh (GitHub CLI), jq, and git. Optional: gcloud CLI for deployment verification."
+compatibility: "Requires gh (GitHub CLI), jq, and git. Requires dev-agent scripts (enter-worktree.sh, exit-worktree.sh) for Phases 5-6. Optional: gcloud CLI for deployment verification."
 ---
 
 # Review Agent
@@ -143,6 +143,11 @@ gh pr view <PR_NUMBER> --json files --jq '.files[].path'
 Read in this order: tests → core logic → config → docs.
 
 Run tests, lint, format, and type checks using commands from the project conventions file (e.g., CLAUDE.md, AGENT.md, etc.).
+
+**Unclear test failures**: If the test suite fails and the cause is not obviously
+attributable to the PR's changes (e.g., flaky test, environment issue, unrelated
+regression), invoke `/diagnose` to determine whether the failure is from the PR,
+pre-existing, or environmental — before marking it as a blocking finding.
 
 ### Categorize findings
 
@@ -277,28 +282,30 @@ human time. False merge costs a bug in production.
 
 Read `references/deployment-verification.md` for full details.
 
-After merging, check whether the project has automated deployment (CI/CD
-workflows, deploy scripts, Cloud Run/GKE/Firebase targets). If it does:
+**Post-merge deployment verification**: After merging, read `pipeline.cd` from
+`.kanban-config.json`. If CD is enabled:
 
-1. Watch the CI/CD pipeline triggered by the merge:
-   ```bash
-   gh run list --branch main --limit 1 --json databaseId,status,name
-   gh run watch <RUN_ID>
-   ```
-2. Poll deployment status with exponential backoff (30s → 60s → 120s →
-   240s, max 15 minutes total). Use `gcloud` to check revision status,
-   service logs, and Cloud Logging for errors.
-3. Confirm success: latest revision active, no errors in logs, health
-   check passing.
-4. **If deployment fails**: diagnose, then either fix (trivial build/config
-   errors), escalate (infrastructure/secrets/runtime issues), or create a
-   new `priority:p0` bug issue (when the fix needs a separate PR).
+1. Wait 30 seconds for the build to start (queuing delay).
+2. Run `verify_command` from the config.
+3. Compare output to `success_value` and `pending_values`:
+   - Matches `success_value` → deployment succeeded. Report and proceed.
+   - Matches a `pending_value` → build still running. Wait 30s, retry.
+     Repeat up to `timeout_minutes`.
+   - Matches neither → deployment failed. Invoke `/diagnose` with the
+     output as the symptom.
+4. On failure: move issue back from `done` to `stage:in-progress` and
+   comment with the failure details.
+
+If `pipeline.cd` is absent or `enabled: false`, check whether the project
+has automated deployment by other signals (CI/CD workflows, deploy scripts,
+Cloud Run/GKE/Firebase targets). If it does, follow `references/deployment-verification.md`
+for manual verification steps.
 
 **Do NOT move the issue to `stage:done` until deployment is confirmed.**
 Once deployment is confirmed successful, move the issue to `stage:done` via `/github-kanban`.
 
 If the project has no automated deployment or the PR doesn't trigger a deploy
-(docs-only, config-only), skip this deployment verification and move the issue 
+(docs-only, config-only), skip this deployment verification and move the issue
 to `stage:done` immediately after merging.
 
 ## Phase 8: Create Follow-up Issues
@@ -360,3 +367,4 @@ After completing the review, report a summary:
 | `references/grounding-guide.md` | During Phase 4 — domain detection and grounding sources |
 | `references/merge-safety.md` | During Phase 7 — merge vs escalate vs request-changes |
 | `references/deployment-verification.md` | During Phase 7d — post-merge deployment monitoring |
+| `diagnose` skill | When tests fail with unclear cause, or deployment fails post-merge |

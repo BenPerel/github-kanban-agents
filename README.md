@@ -1,6 +1,6 @@
 # github-kanban-agents
 
-Autonomous AI agent skills for the full software development lifecycle — powered by a GitHub Projects kanban board. Agents pick up issues, implement with TDD, review PRs, merge, and verify deployment. Includes dev-agent, review-agent, simplify, and github-kanban skills. Works with Gemini, Claude, and 40+ agents.
+Autonomous AI agent skills for the full software development lifecycle — powered by a GitHub Projects kanban board. Agents pick up issues, implement with TDD, review PRs, merge, and verify deployment. Includes dev-agent, review-agent, diagnose, simplify, and github-kanban skills. Works with Gemini, Claude, and 40+ agents.
 
 ## Installation
 
@@ -115,6 +115,19 @@ Autonomous review agent that picks up PRs from In Review, performs systematic co
 - **Human re-review** — picks up issues returned to `stage:in-review` after human feedback
 - **Follow-up issues as prompts** — discovered improvements filed with full context for agent pickup
 - **Duplicate PR detection** — handles race condition edge case of multiple PRs per issue
+
+### diagnose
+
+Structured diagnostic methodology for bugs and failures with unclear root cause. Used by dev-agent (bug issues) and review-agent (test/deployment failures).
+
+**Flow:** build feedback loop → reproduce → hypothesize (3-5 ranked) → instrument one variable at a time → fix + regression test → cleanup + post-mortem
+
+**Covers:**
+- **10-method feedback loop hierarchy** — from failing test (fastest) down to human-in-the-loop (last resort)
+- **Hypothesis-driven debugging** — prevents tunnel-vision on first plausible explanation
+- **Tagged instrumentation** — `[DEBUG-xxxx]` tags for single-grep cleanup
+- **Regression test integration** — flows naturally into the TDD cycle
+- **Escalation criteria** — when to stop diagnosing and escalate to human review
 
 ### simplify
 

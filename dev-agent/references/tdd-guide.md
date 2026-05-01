@@ -8,6 +8,29 @@ TDD matters more for AI agents than for human developers because AI agents are
 prone to writing tests that validate their own implementation rather than the
 actual requirements. This guide exists to prevent that.
 
+> Examples in this guide use Python — adapt syntax for your project's language.
+
+## Anti-Pattern: Horizontal Slicing
+
+**DO NOT write all tests first, then all implementation.** This treats RED as
+"write all tests" and GREEN as "write all code." It produces tests that validate
+imagined behavior rather than actual behavior.
+
+```
+WRONG (horizontal):
+  RED:   test1, test2, test3, test4, test5
+  GREEN: impl1, impl2, impl3, impl4, impl5
+
+RIGHT (vertical):
+  RED→GREEN: test1→impl1
+  RED→GREEN: test2→impl2
+  RED→GREEN: test3→impl3
+  ...
+```
+
+Each test responds to what you learned from the previous cycle. Because you just
+wrote the code, you know exactly what behavior matters and how to verify it.
+
 ## The Red-Green-Refactor Cycle
 
 Every feature or behavior follows this exact sequence:
@@ -20,6 +43,11 @@ Every feature or behavior follows this exact sequence:
   - If the test passes without implementation, it's either trivial, testing
     the wrong thing, or the behavior already exists
   - A test that was never red is not a meaningful test
+
+**Start with a tracer bullet**: Your first Red-Green cycle should prove one
+complete behavior end-to-end. This validates the integration path works before
+you add more tests. Pick the most representative requirement — not the simplest,
+not the hardest — and make it pass.
 
 ### 2. Green — Write Minimal Implementation
 
@@ -96,21 +124,25 @@ def test_user_creation():
 different input data. For functions with well-defined domains, consider
 property-based tests.
 
-### Justify Every Mock
+### Mock at System Boundaries Only
 
 **The problem**: Over-mocking creates tests that verify mock configuration
-rather than actual behavior. When everything is mocked, you're testing
-nothing.
+rather than actual behavior. When everything is mocked, you're testing nothing.
 
-**The rule**: Only mock external dependencies — APIs, databases, file
-systems, network calls. Add a comment to every mock explaining why it
-can't be a real object.
+**The rule**: Only mock at system boundaries — external APIs, databases, file
+systems, network calls, time/randomness. Never mock your own classes, internal
+collaborators, or anything you control.
+
+**Do mock**: External HTTP APIs, third-party SDKs, payment gateways, email
+services, system clock, random number generators.
+
+**Don't mock**: Your own modules, internal function calls, anything where you
+can use the real implementation in a test.
 
 ```python
-# Mock justified: external HTTP API we don't control
+# System boundary — mock is appropriate
 @patch("myapp.client.requests.get")
 def test_fetch_weather(mock_get):
-    # Mock the weather API because: external service, rate-limited, non-deterministic
     mock_get.return_value.json.return_value = {"temp": 72}
     result = fetch_weather("NYC")
     assert result.temperature == 72
@@ -137,6 +169,15 @@ never receives None).
 realistic usage scenarios. Ask: "Can this input actually happen in
 production?" If yes, test it. If no, don't add a test just for coverage.
 
+### Prioritize Test Coverage
+
+**You can't test everything.** Focus testing effort on critical paths and
+complex logic. Simple getter/setter behavior or straightforward delegation
+can be validated by integration-level tests rather than exhaustive unit tests.
+Ask: "If this behavior breaks silently in production, how bad is it?" Test
+the high-consequence paths thoroughly; test the trivial paths lightly or
+through broader integration coverage.
+
 ### Property-Based Tests Where Applicable
 
 For functions with well-defined properties, use property-based tests — the
@@ -158,7 +199,7 @@ Before committing, verify:
 - [ ] Each test was verified to fail before its implementation existed (Red)
 - [ ] No hardcoded return values in the implementation
 - [ ] Each behavior has at least 2 test cases with different inputs
-- [ ] Mocks are justified with comments and used only for external dependencies
+- [ ] Mocks are used only at system boundaries (external APIs, databases, network)
 - [ ] Edge cases come from the spec or realistic scenarios, not coverage padding
 - [ ] Tests are independent — no shared mutable state between tests
 - [ ] Running the full test suite passes, not just the new tests

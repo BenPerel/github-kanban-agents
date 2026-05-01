@@ -121,7 +121,8 @@ feedback specifically.
 
 ## Phase 3: PR Review
 
-Read `references/review-checklist.md` — follow each section in order.
+You MUST load `references/review-checklist.md` and follow each section in order.
+It defines the review criteria that drive your Phase 7 decision.
 
 ### Read the inputs
 
@@ -156,7 +157,9 @@ Work through the checklist, then categorize each finding as **blocking**,
 
 ## Phase 4: Grounding Verification
 
-Read `references/grounding-guide.md` for the domain detection table.
+You MUST load `references/grounding-guide.md` to verify the PR's grounding
+claims. Without it, you cannot assess whether the right documentation sources
+were consulted.
 
 Check the PR's "Grounding" section against the domains touched in the diff:
 
@@ -175,20 +178,10 @@ round-trips through the dev-agent.
 **Skip this phase** (and Phase 6) if you have no fixes to make and are not
 merging — go straight to Phase 7.
 
-### What qualifies as an easy fix
-
-- Typos in strings, comments, or variable names
-- Missing imports
-- Small style fixes (formatting, naming conventions)
-- 1-2 line in-scope fixes (obvious corrections related to the PR's changes)
-- Removing debug print statements or leftover commented-out code
-
-### What does NOT qualify
-
-- Anything that changes behavior or public interfaces
-- Fixes that require new or modified tests
-- Changes outside the scope of the PR
-- Anything you're uncertain about
+**Easy fixes only**: Typos, missing imports, small style fixes, 1-2 line
+corrections, debug cleanup. Nothing that changes behavior, requires new tests,
+or is outside the PR's scope. If uncertain, request changes instead of fixing.
+Full criteria and guardrails: `references/merge-safety.md` § Easy Fix Criteria.
 
 ### Worktree setup
 
@@ -249,7 +242,9 @@ After Phase 5 fixes and/or Phase 6 simplification:
 
 ## Phase 7: Decision
 
-Read `references/merge-safety.md` for the full decision framework and criteria.
+Before making the merge/escalate/request-changes decision, you MUST load
+`references/merge-safety.md`. It contains the size-based autonomy gates and
+decision framework.
 
 Three outcomes, in order of precedence:
 
@@ -280,7 +275,9 @@ human time. False merge costs a bug in production.
 
 ### 7d: Verify Deployment (after merge only)
 
-Read `references/deployment-verification.md` for full details.
+After merging, if the project has deployment automation, you MUST load
+`references/deployment-verification.md`. It contains the polling algorithm
+and failure handling.
 
 **Post-merge deployment verification**: After merging, read `pipeline.cd` from
 `.kanban-config.json`. If CD is enabled:

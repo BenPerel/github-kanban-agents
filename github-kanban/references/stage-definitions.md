@@ -152,23 +152,3 @@ to Ready.
 **Default stage**: If the issue has a priority and no `Blocked by #N` → default
 to `stage:ready`. Only use `stage:backlog` when the issue is explicitly blocked,
 depends on unfinished work, or is deferred.
-
-## Worktree Maintenance
-
-After agent crashes or force-kills, stale worktree metadata can accumulate.
-The `enter-worktree.sh` script runs `git worktree prune` automatically before
-creating new worktrees, but manual cleanup may also be needed:
-
-```bash
-# Clean stale worktree metadata
-git worktree prune
-
-# List all active worktrees
-git worktree list
-
-# Cross-reference with in-progress issues to find orphans
-gh issue list --label "stage:in-progress" --state open
-```
-
-See `dev-agent/references/worktree-safety.md` for full orphan detection and
-cleanup procedures.

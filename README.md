@@ -12,7 +12,7 @@ Autonomous AI agent skills for the full software development lifecycle — power
 npx skills add BenPerel/github-kanban-agents -y --skill "*" --scope local
 ```
 
-This installs all 4 skills to your detected agents (Claude Code, Antigravity, Gemini CLI, Cursor, Codex, and [40+ more](https://github.com/vercel-labs/skills#available-agents)).
+This installs all 5 skills to your detected agents (Claude Code, Antigravity, Gemini CLI, Cursor, Codex, and [40+ more](https://github.com/vercel-labs/skills#available-agents)).
 
 ### Gemini CLI
 
@@ -27,6 +27,7 @@ git clone https://github.com/BenPerel/github-kanban-agents.git
 ln -s /path/to/github-kanban-agents/dev-agent .gemini/skills/dev-agent
 ln -s /path/to/github-kanban-agents/review-agent .gemini/skills/review-agent
 ln -s /path/to/github-kanban-agents/simplify .gemini/skills/simplify
+ln -s /path/to/github-kanban-agents/diagnose .gemini/skills/diagnose
 # github-kanban requires setup — see below
 ```
 
@@ -67,7 +68,7 @@ The setup script is **idempotent** — safe to re-run at any time to regenerate 
 Board operations skill — manages issue lifecycle, stage transitions, WIP limits, and label taxonomy.
 
 **Covers:**
-- **Issue creation** — correct labels (`stage:*`, type, `priority:*`, `size:*`), project assignment, dependency tracking (`Blocked by #N`)
+- **Issue creation** — correct labels (`stage:*`, type, `priority:*`, `size:*`), project assignment, dependency tracking (`Blocked by #N`), parent issue linking (`--parent`)
 - **Stage transitions** — WIP limit checks, dual updates (label + board status), size label enforcement at Ready
 - **Duplicate handling** — close with `not planned`, strip all workflow labels, add `duplicate` label
 - **Work prioritization** — P0-first, unblock blockers, respect WIP limits, backlog fallback
@@ -160,7 +161,7 @@ Also enable the free built-in project automations (must be done in the UI):
 The kanban skill is designed for safety and controlled autonomy. It ships with a sensible default workflow (Backlog → Ready → In Progress → In Review → Done). You can easily configure the installed skills in your local project to set your own boundaries:
 
 - **Size-based Autonomy Gates** — By default, the `review-agent` automatically merges `XS` and `S` sized PRs if tests pass. Anything sized `M` or larger is automatically escalated to `Human Review`. This prevents agents from unilaterally YOLOing large, complex changes. (You can adjust this threshold safely inside the installed `review-agent` SKILL.md).
-- **Hard WIP Limits** — Prevent agent runaway loops by capping concurrent work. Agents respect strict Kanban WIP limits (defaults: Backlog 10, In Progress 3, In Review 5), ensuring they finish what they start instead of endlessly pulling new tickets.
+- **Hard WIP Limits** — Prevent agent runaway loops by capping concurrent work. Agents respect strict Kanban WIP limits (defaults: Backlog 10, In Progress 3, In Review 5), configurable in `.kanban-config.json`. Agents finish what they start instead of endlessly pulling new tickets.
 - **Kanban columns** — add, remove, or rename stages.
 - **Label taxonomy** — change label prefixes or add new label types (e.g. adapt priorities, add P3/P4, or resize labels).
 

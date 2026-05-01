@@ -111,24 +111,22 @@ If the move fails, pick the next eligible issue or stop. See
 
 ## Phase 3: Worktree Setup
 
-Read `references/worktree-safety.md` before your first worktree operation.
+Before creating a worktree, you MUST load `references/worktree-safety.md` — it
+contains the naming rules, failure recovery, and race condition prevention.
 
-1. Create the worktree using the portable script:
-   ```bash
-   WORKTREE=$(bash .agents/skills/dev-agent/scripts/enter-worktree.sh "<type>+<issue#>-<short-desc>")
-   cd "$WORKTREE"
-   ```
-   - The `+` translates to `/` in the branch name: `feat+15-auth-flow` →
-     branch `feat/15-auth-flow`
-   - Types: `feat/`, `fix/`, `docs/`, `refactor/`, `chore/`
-2. Your cwd is now inside the worktree — all file operations happen here
-3. The script handles nested worktrees, stale metadata pruning, and orphan recovery
-4. **If creation fails** → un-claim the issue (move back to `stage:ready`), stop
+```bash
+WORKTREE=$(bash .agents/skills/dev-agent/scripts/enter-worktree.sh "<type>+<issue#>-<short-desc>")
+cd "$WORKTREE"
+```
+
+Use `+` as separator — becomes `/` in the branch name. If creation fails,
+un-claim the issue (move back to `stage:ready`) and stop.
 
 ## Phase 4: Grounding
 
-Read `references/grounding-guide.md`. Detect the issue's domains and load
-relevant documentation before writing any code.
+You MUST load `references/grounding-guide.md` and match the issue's domain to a
+grounding source before writing any code. If you skip grounding, you will use
+outdated APIs.
 
 ## Phase 5: TDD — Write Tests First
 
@@ -137,15 +135,14 @@ obvious from the issue description, invoke `/diagnose` before entering the TDD
 cycle. The diagnose skill's Phase 5 (fix + regression test) naturally flows into
 TDD — the regression test becomes your first Red.
 
-Read `references/tdd-guide.md` — follow it exactly.
-
-Translate each issue requirement into a failing test before writing implementation.
-The guide's anti-gaming rules are mandatory — pay special attention to hardcoded
-returns and tests-after-code.
+You MUST load `references/tdd-guide.md` and follow the Red-Green-Refactor cycle
+for every requirement. The anti-gaming rules are mandatory — skipping them
+produces tests that validate nothing.
 
 ## Phase 6: Implementation
 
-Read `references/sdlc-checklist.md` for the full checklist.
+You MUST load `references/sdlc-checklist.md` and work through each checkbox. It
+covers validation, commit standards, and escalation triggers.
 
 - Follow project coding conventions from the project conventions file (e.g., CLAUDE.md, AGENT.md, etc.)
 - Make changes incrementally — commit logical units
@@ -161,20 +158,10 @@ cd "$(bash ../../.agents/skills/dev-agent/scripts/exit-worktree.sh keep)"`, stop
 
 ## Phase 7: Validation
 
-Before creating the PR, verify all quality gates pass:
-
-1. **Lint** — run the project's linter (e.g., `ruff check .` for Python)
-2. **Format** — run the formatter check (e.g., `ruff format --check .`)
-3. **Type check** — run the type checker (e.g., `ty` for Python)
-4. **Test suite** — run the full test suite, not just your new tests
-5. **Security** — Review your `git diff` exclusively looking for hardcoded keys,
-   passwords, or simple injection vectors (SQLi, Command Injection, XSS) before
-   generating the PR.
-6. **UI verification** — if the issue involves visual changes, use
-   `/playwright-cli` to verify
-
-If any check fails, fix and re-validate. If you cannot fix a failure
-confidently, escalate to Human Review (mid-dev).
+Run every check in `references/sdlc-checklist.md` § Validation — lint, format,
+type check, full test suite, security review, and UI verification (if applicable).
+Fix any failures before creating the PR. If you cannot fix confidently, escalate
+to Human Review (mid-dev).
 
 ## Phase 8: Commit, Push, PR
 
@@ -222,18 +209,10 @@ EOF
 
 ### Wait for CI Checks
 
-After creating the PR, you must wait for the remote CI checks to pass before transitioning the issue:
-
-1. Run `gh pr checks --watch` to block the terminal until remote CI workflows finish.
-2. **If checks fail**:
-   - Do NOT exit the worktree.
-   - Do NOT move the issue to `stage:in-review`.
-   - Read the failing CI logs (e.g., using `gh run view --log-failed`).
-   - Fix the code locally.
-   - Commit the changes and `git push`.
-   - Run `gh pr checks --watch` again.
-   - Repeat this loop until all checks are green.
-3. Only once `gh pr checks` returns successfully are you permitted to proceed.
+Follow the CI check procedure in `references/sdlc-checklist.md` § PR Creation:
+run `gh pr checks --watch`, fix any failures (read logs via `gh run view
+--log-failed`, fix, commit, push), repeat until all checks pass. Do NOT exit
+the worktree or move the issue until CI is green.
 
 **CI gate**: When CI is configured (`pipeline.ci.enabled` in `.kanban-config.json`),
 `move-issue.sh --to in-review` will warn if PR checks have not passed. If blocked:

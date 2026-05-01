@@ -11,6 +11,12 @@ set -euo pipefail
 
 NAME="${1:?Usage: enter-worktree.sh <name>}"
 
+# --- Prerequisites ---
+if ! command -v git &>/dev/null; then
+  echo "ERROR: git is required but not found in PATH" >&2
+  exit 1
+fi
+
 # --- Validate name (prevent path traversal and unsafe characters) ---
 if [[ "$NAME" == *..* ]] || [[ "$NAME" == /* ]] || [[ "$NAME" == *\\* ]]; then
   echo "ERROR: Invalid worktree name '${NAME}': must not contain '..', start with '/', or contain '\\'" >&2

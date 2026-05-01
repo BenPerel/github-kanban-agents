@@ -19,6 +19,25 @@
 
 set -euo pipefail
 
+# --- Help ---
+if [[ "${1:-}" == "--help" ]]; then
+  cat <<'HELP'
+Usage: setup.sh <PROJECT_NUMBER|new> [BOARD_NAME] <OWNER>
+
+Arguments:
+  PROJECT_NUMBER   Existing project board number, or "new" to create one
+  BOARD_NAME       Name for the new board (required when using "new")
+  OWNER            GitHub user or organization that owns the project
+
+Examples:
+  setup.sh new "My Kanban Board" myorg
+  setup.sh 42 myorg
+
+Prerequisites: gh (GitHub CLI), jq, git
+HELP
+  exit 0
+fi
+
 # --- Pre-flight checks ---
 echo "=== Pre-flight Checks ==="
 
@@ -329,10 +348,58 @@ jq -n \
       m: $m_id,
       l: $l_id,
       xl: $xl_id
+    },
+    wip_limits: {
+      backlog: 10,
+      "in-progress": 3,
+      "in-review": 5
     }
   }' > "$CONFIG_FILE"
 
 echo "✓ Generated: $CONFIG_FILE"
+
+# --- Pipeline Configuration (optional) ---
+if [ -t 0 ]; then
+  echo ""
+  echo "--- Pipeline Configuration (optional) ---"
+
+  read -rp "Enable CI gate on move to in-review? [Y/n] " ci_choice
+  if [[ "${ci_choice:-Y}" =~ ^[Yy] ]]; then
+    CI_ENABLED=true
+  else
+    CI_ENABLED=false
+  fi
+
+  CD_ENABLED=false
+  CD_VERIFY_CMD=""
+  CD_SUCCESS=""
+  CD_PENDING=""
+  CD_TIMEOUT=15
+  read -rp "Enable CD verification after merge? [y/N] " cd_choice
+  if [[ "${cd_choice:-N}" =~ ^[Yy] ]]; then
+    CD_ENABLED=true
+    read -rp "  Verify command (e.g., gcloud builds list ... --format='value(status)'): " CD_VERIFY_CMD
+    read -rp "  Success value (e.g., SUCCESS): " CD_SUCCESS
+    read -rp "  Pending values, comma-separated (e.g., WORKING,QUEUED): " CD_PENDING_RAW
+    CD_PENDING=$(echo "$CD_PENDING_RAW" | jq -R 'split(",") | map(gsub("^\\s+|\\s+$";""))' 2>/dev/null || echo '[]')
+    read -rp "  Timeout minutes [15]: " CD_TIMEOUT_INPUT
+    CD_TIMEOUT="${CD_TIMEOUT_INPUT:-15}"
+  fi
+
+  # Add pipeline config to the generated config file
+  jq --argjson ci_enabled "$CI_ENABLED" \
+     --argjson cd_enabled "$CD_ENABLED" \
+     --arg cd_cmd "${CD_VERIFY_CMD:-}" \
+     --arg cd_success "${CD_SUCCESS:-}" \
+     --argjson cd_pending "${CD_PENDING:-[]}" \
+     --argjson cd_timeout "$CD_TIMEOUT" \
+     '. + {pipeline: {
+        ci: {enabled: $ci_enabled},
+        cd: {enabled: $cd_enabled, verify_command: $cd_cmd, success_value: $cd_success, pending_values: $cd_pending, timeout_minutes: $cd_timeout}
+      }}' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+
+  echo "✓ Pipeline config added to $CONFIG_FILE"
+fi
 
 # --- Create labels (idempotent — --force updates if exists) ---
 echo ""

@@ -11,6 +11,7 @@
 #   --priority PRIORITY Priority: p0|p1|p2 (default: p2)
 #   --size SIZE         Size: xs|s|m|l|xl (required if stage is ready+)
 #   --blocked-by N      Issue number this is blocked by (repeatable)
+#   --parent N          Parent issue number (for sub-issues of a larger initiative)
 #   --config PATH       Path to .kanban-config.json (default: auto-detect)
 #   --help              Show this help
 #
@@ -21,6 +22,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
+
 # --- Help ---
 show_help() {
   sed -n '2,/^$/{ s/^# \?//; p }' "$0"
@@ -29,29 +34,13 @@ show_help() {
   echo "  create-issue.sh --title 'Fix login bug' --body 'The login page crashes' --type bug --size s"
   echo "  create-issue.sh --title 'Add dark mode' --body 'Users want dark mode' --type enhancement --priority p1 --size m"
   echo "  create-issue.sh --title 'Blocked task' --body 'Depends on auth' --type enhancement --stage backlog --blocked-by 42"
+  echo "  create-issue.sh --title 'Sub task' --body 'Part of auth work' --type enhancement --size s --parent 10"
 }
 
 if [[ "${1:-}" == "--help" ]]; then
   show_help
   exit 0
 fi
-
-# --- Locate config ---
-find_config() {
-  if [ -n "${CONFIG_PATH:-}" ]; then
-    echo "$CONFIG_PATH"
-    return
-  fi
-  local root
-  root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "ERROR: Not in a git repo" >&2; exit 1; }
-  local config="$root/.kanban-config.json"
-  if [ ! -f "$config" ]; then
-    echo "ERROR: .kanban-config.json not found at $config" >&2
-    echo "Run setup.sh first to generate it." >&2
-    exit 1
-  fi
-  echo "$config"
-}
 
 # --- Parse arguments ---
 TITLE=""
@@ -61,6 +50,7 @@ TYPE=""
 PRIORITY="p2"
 SIZE=""
 BLOCKED_BY=()
+PARENT=""
 CONFIG_PATH=""
 
 while [[ $# -gt 0 ]]; do
@@ -72,6 +62,7 @@ while [[ $# -gt 0 ]]; do
     --priority) PRIORITY="$2"; shift 2 ;;
     --size)     SIZE="$2"; shift 2 ;;
     --blocked-by) BLOCKED_BY+=("$2"); shift 2 ;;
+    --parent)   PARENT="$2"; shift 2 ;;
     --config)   CONFIG_PATH="$2"; shift 2 ;;
     --help)     show_help; exit 0 ;;
     *)          echo "ERROR: Unknown option: $1" >&2; exit 1 ;;
@@ -139,8 +130,13 @@ if [ -n "$SIZE" ]; then
   SIZE_OPTION_ID=$(jq -r --arg s "$SIZE" '.sizes[$s]' "$CONFIG")
 fi
 
-# --- Append blocked-by references to body ---
+# --- Prepend parent reference and append blocked-by references to body ---
 FULL_BODY="$BODY"
+if [ -n "$PARENT" ]; then
+  FULL_BODY="Parent: #$PARENT
+
+$FULL_BODY"
+fi
 for blocked in "${BLOCKED_BY[@]}"; do
   FULL_BODY="$FULL_BODY
 
@@ -224,4 +220,5 @@ jq -n \
   --arg priority "$PRIORITY" \
   --arg size "${SIZE:-}" \
   --arg type "$TYPE" \
-  '{number: $number, url: $url, stage: $stage, priority: $priority, size: $size, type: $type}'
+  --arg parent "${PARENT:-}" \
+  '{number: $number, url: $url, stage: $stage, priority: $priority, size: $size, type: $type, parent: $parent}'

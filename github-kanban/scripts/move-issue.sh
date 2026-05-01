@@ -6,6 +6,8 @@
 # Options:
 #   --issue NUMBER      Issue number (required)
 #   --to STAGE          Target stage name (required)
+#   --skip-pipeline-check "REASON"
+#                       Skip CI check when moving to in-review
 #   --config PATH       Path to .kanban-config.json (default: auto-detect)
 #   --help              Show this help
 #
@@ -15,6 +17,10 @@
 #   2  GitHub API error
 
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # --- Help ---
 show_help() {
@@ -31,40 +37,17 @@ if [[ "${1:-}" == "--help" ]]; then
   exit 0
 fi
 
-# --- Locate config ---
-find_config() {
-  if [ -n "${CONFIG_PATH:-}" ]; then
-    echo "$CONFIG_PATH"
-    return
-  fi
-  local root
-  root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "ERROR: Not in a git repo" >&2; exit 1; }
-  local config="$root/.kanban-config.json"
-  if [ ! -f "$config" ]; then
-    echo "ERROR: .kanban-config.json not found at $config" >&2
-    echo "Run setup.sh first to generate it." >&2
-    exit 1
-  fi
-  echo "$config"
-}
-
-# --- WIP limits ---
-declare -A WIP_LIMITS
-WIP_LIMITS=(
-  [backlog]=10
-  [in-progress]=3
-  [in-review]=5
-)
-
 # --- Parse arguments ---
 ISSUE=""
 TO_STAGE=""
 CONFIG_PATH=""
+SKIP_PIPELINE_CHECK=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --issue)  ISSUE="$2"; shift 2 ;;
     --to)     TO_STAGE="$2"; shift 2 ;;
+    --skip-pipeline-check) SKIP_PIPELINE_CHECK="$2"; shift 2 ;;
     --config) CONFIG_PATH="$2"; shift 2 ;;
     --help)   show_help; exit 0 ;;
     *)        echo "ERROR: Unknown option: $1" >&2; exit 1 ;;
@@ -130,8 +113,8 @@ case "$TO_STAGE" in
   in-review)   WIP_KEY="in-review" ;;
 esac
 
-if [ -n "$WIP_KEY" ] && [ -n "${WIP_LIMITS[$WIP_KEY]:-}" ]; then
-  LIMIT="${WIP_LIMITS[$WIP_KEY]}"
+LIMIT=$(get_wip_limit "$WIP_KEY" "$CONFIG")
+if [ -n "$WIP_KEY" ] && [ -n "$LIMIT" ]; then
   COUNT=$(gh issue list --repo "$REPO" --label "$WIP_LABEL" --state open --json number --jq 'length' 2>/dev/null || echo "0")
 
   if [ "$COUNT" -ge "$LIMIT" ]; then
@@ -155,6 +138,34 @@ if [[ "$TO_STAGE" == "ready" || "$TO_STAGE" == "in-progress" || "$TO_STAGE" == "
     echo "ERROR: Issue #$ISSUE is missing a size label (required for $TO_STAGE)" >&2
     exit 1
   fi
+fi
+
+# --- CI gate (in-review transitions only) ---
+if [[ "$TO_STAGE" == "in-review" ]] && [ -z "$SKIP_PIPELINE_CHECK" ]; then
+  CI_ENABLED=$(jq -r '.pipeline.ci.enabled // false' "$CONFIG" 2>/dev/null)
+  if [ "$CI_ENABLED" = "true" ]; then
+    PR_NUMBER=$(gh pr list --repo "$REPO" --search "closes #${ISSUE}" --state open \
+      --json number --jq '.[0].number' 2>/dev/null || echo "")
+
+    if [ -z "$PR_NUMBER" ]; then
+      echo "WARNING: No open PR found for issue #${ISSUE}. Skipping CI gate." >&2
+    else
+      FAILED=$(gh pr checks "$PR_NUMBER" --repo "$REPO" --json name,state \
+        --jq '[.[] | select(.state != "SUCCESS" and .state != "SKIPPED")] | length' 2>/dev/null || echo "0")
+
+      if [ "$FAILED" -gt 0 ]; then
+        echo "WARNING: CI checks have not all passed for PR #${PR_NUMBER}." >&2
+        gh pr checks "$PR_NUMBER" --repo "$REPO" --json name,state \
+          --jq '[.[] | select(.state != "SUCCESS" and .state != "SKIPPED")] | .[].name' 2>/dev/null | \
+          while read -r check_name; do echo "  - $check_name" >&2; done
+        echo "" >&2
+        echo "  Wait:  gh pr checks ${PR_NUMBER} --watch" >&2
+        echo "  Skip:  --skip-pipeline-check \"reason\"" >&2
+      fi
+    fi
+  fi
+elif [[ "$TO_STAGE" == "in-review" ]] && [ -n "$SKIP_PIPELINE_CHECK" ]; then
+  echo "CI gate skipped: $SKIP_PIPELINE_CHECK" >&2
 fi
 
 # --- Update label ---

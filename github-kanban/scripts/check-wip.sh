@@ -15,6 +15,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
+
 # --- Help ---
 show_help() {
   sed -n '2,/^$/{ s/^# \?//; p }' "$0"
@@ -29,31 +33,6 @@ if [[ "${1:-}" == "--help" ]]; then
   show_help
   exit 0
 fi
-
-# --- Locate config ---
-find_config() {
-  if [ -n "${CONFIG_PATH:-}" ]; then
-    echo "$CONFIG_PATH"
-    return
-  fi
-  local root
-  root=$(git rev-parse --show-toplevel 2>/dev/null) || { echo "ERROR: Not in a git repo" >&2; exit 1; }
-  local config="$root/.kanban-config.json"
-  if [ ! -f "$config" ]; then
-    echo "ERROR: .kanban-config.json not found at $config" >&2
-    echo "Run setup.sh first to generate it." >&2
-    exit 1
-  fi
-  echo "$config"
-}
-
-# --- WIP limits ---
-declare -A WIP_LIMITS
-WIP_LIMITS=(
-  [backlog]=10
-  [in-progress]=3
-  [in-review]=5
-)
 
 # --- Parse arguments ---
 STAGE=""
@@ -74,19 +53,19 @@ if [ -z "$STAGE" ]; then
   exit 1
 fi
 
-if [ -z "${WIP_LIMITS[$STAGE]:-}" ]; then
-  echo "ERROR: No WIP limit defined for stage '$STAGE'" >&2
-  echo "Stages with WIP limits: backlog (10), in-progress (3), in-review (5)" >&2
-  exit 1
-fi
-
 # --- Read config ---
 CONFIG=$(find_config)
 REPO=$(jq -r '.repo' "$CONFIG")
 
-# --- Get the stage label ---
+# --- Get the stage label and WIP limit ---
 STAGE_LABEL=$(jq -r --arg s "$STAGE" '.stages[$s].label' "$CONFIG")
-LIMIT="${WIP_LIMITS[$STAGE]}"
+LIMIT=$(get_wip_limit "$STAGE" "$CONFIG")
+
+if [ -z "$LIMIT" ]; then
+  echo "ERROR: No WIP limit defined for stage '$STAGE'" >&2
+  echo "Stages with WIP limits: backlog, in-progress, in-review" >&2
+  exit 1
+fi
 
 # --- Count open issues in this stage ---
 COUNT=$(gh issue list --repo "$REPO" --label "$STAGE_LABEL" --state open --json number --jq 'length' 2>&1) || {

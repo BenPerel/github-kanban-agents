@@ -1,3 +1,6 @@
+<!-- SYNC: This file is duplicated in dev-agent/references/grounding-guide.md.
+     Keep both copies in sync. Changes here must be applied to the other copy. -->
+
 # Grounding Guide
 
 Before writing any code, detect the issue's domain and pull in the right

@@ -132,6 +132,11 @@ relevant documentation before writing any code.
 
 ## Phase 5: TDD — Write Tests First
 
+**Bug issues**: If the issue type is `bug` and the root cause is not immediately
+obvious from the issue description, invoke `/diagnose` before entering the TDD
+cycle. The diagnose skill's Phase 5 (fix + regression test) naturally flows into
+TDD — the regression test becomes your first Red.
+
 Read `references/tdd-guide.md` — follow it exactly.
 
 Translate each issue requirement into a failing test before writing implementation.
@@ -230,6 +235,14 @@ After creating the PR, you must wait for the remote CI checks to pass before tra
    - Repeat this loop until all checks are green.
 3. Only once `gh pr checks` returns successfully are you permitted to proceed.
 
+**CI gate**: When CI is configured (`pipeline.ci.enabled` in `.kanban-config.json`),
+`move-issue.sh --to in-review` will warn if PR checks have not passed. If blocked:
+1. Run `gh pr checks <PR_NUMBER> --watch` to wait for completion
+2. If checks fail: read logs with `gh run view --log-failed`, fix, commit, push
+3. Retry `move-issue.sh --to in-review`
+
+For docs-only or non-CI changes: `--skip-pipeline-check "reason"`
+
 ### Move to In Review
 
 Use `/github-kanban` to move the issue from `stage:in-progress` to
@@ -297,3 +310,4 @@ using the agent-ready format (also in `/github-kanban`).
 | `references/tdd-guide.md` | Before writing tests — methodology and anti-gaming |
 | `references/sdlc-checklist.md` | During implementation — step-by-step checklist |
 | `references/worktree-safety.md` | Before creating or exiting a worktree |
+| `diagnose` skill | When the issue is a bug with unclear root cause |

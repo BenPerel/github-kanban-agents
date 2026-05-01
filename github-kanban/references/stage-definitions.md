@@ -121,11 +121,15 @@ When you find bugs or improvements while working on something else:
 
 Every issue is a prompt for an AI agent with zero prior context. Include:
 
+- **Parent**: Reference to parent issue or initiative (if this is part of a
+  larger effort), or omit if standalone
 - **What**: Precise description of what needs to change
 - **Why**: What prompted this and why it matters
 - **Where**: Specific file paths and line numbers
 - **How** (suggested): Recommended approach
 - **Acceptance criteria**: How the agent knows it's done
+- **Blocked by**: `#N` references to blocking issues, or "None — can start
+  immediately"
 - **Prior investigation**: What's already been checked or ruled out
 
 Never include sensitive data (secrets, credentials, PII) in issue bodies.

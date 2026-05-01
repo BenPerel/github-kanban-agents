@@ -3,7 +3,22 @@
 After merging a PR, verify the deployment succeeded before marking the issue
 as Done. Read during Phase 7d.
 
-## When to Run
+## Config-Driven Verification
+
+If `.kanban-config.json` has a `pipeline.cd` section with `enabled: true`, use
+it instead of the manual detection below. The config provides:
+- `verify_command`: Shell command that outputs the deployment status
+- `success_value`: String that means "deployed successfully"
+- `pending_values`: Strings that mean "still deploying"
+- `timeout_minutes`: Maximum time to poll before treating as failure
+
+Run the `verify_command`, compare output to the values, and poll with 30s
+intervals up to the timeout. This is the preferred path — it works across
+Cloud Build, GitHub Actions, Vercel, Netlify, and any other provider.
+
+## When to Run (Manual Detection)
+
+If no `pipeline.cd` config exists, fall back to manual detection.
 
 **Run this phase** when the project deploys automatically on merge (CI/CD to
 Cloud Run, GKE, App Engine, Firebase, etc.). Check CLAUDE.md for deployment

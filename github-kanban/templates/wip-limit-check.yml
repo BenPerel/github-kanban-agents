@@ -23,7 +23,7 @@ on:
 env:
   PROJECT_NUMBER: "<PROJECT_NUMBER>"
   PROJECT_OWNER: "<OWNER>"
-  # WIP limits — adjust these to match your workflow
+  # WIP limits — canonical source: .kanban-config.json wip_limits section. Keep in sync.
   WIP_LIMIT_BACKLOG: "10"
   WIP_LIMIT_IN_PROGRESS: "3"
   WIP_LIMIT_IN_REVIEW: "5"

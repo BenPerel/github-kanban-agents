@@ -86,7 +86,8 @@ You start with zero context. Bootstrap yourself:
 2. For each candidate:
    - Verify a linked PR exists and is open:
      ```bash
-     gh pr list --search "closes #<ISSUE>" --state open --json number,url
+     gh pr list --state open --json number,url,closingIssuesReferences \
+       --jq '[.[] | select(.closingIssuesReferences[]?.number == <ISSUE>)]'
      ```
    - If no open PR found, this is an orphaned in-review issue. Comment on the
      issue ("No open PR found — moving back to in-progress"), move to

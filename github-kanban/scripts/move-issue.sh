@@ -144,8 +144,10 @@ fi
 if [[ "$TO_STAGE" == "in-review" ]] && [ -z "$SKIP_PIPELINE_CHECK" ]; then
   CI_ENABLED=$(jq -r '.pipeline.ci.enabled // false' "$CONFIG" 2>/dev/null)
   if [ "$CI_ENABLED" = "true" ]; then
-    PR_NUMBER=$(gh pr list --repo "$REPO" --search "closes #${ISSUE}" --state open \
-      --json number --jq '.[0].number' 2>/dev/null || echo "")
+    PR_NUMBER=$(gh pr list --repo "$REPO" --state open \
+      --json number,closingIssuesReferences \
+      --jq "[.[] | select(.closingIssuesReferences[]?.number == ${ISSUE}) | .number] | .[0]" \
+      2>/dev/null || echo "")
 
     if [ -z "$PR_NUMBER" ]; then
       echo "WARNING: No open PR found for issue #${ISSUE}. Skipping CI gate." >&2

@@ -1,6 +1,6 @@
 <!-- SYNC-SOURCE: dev-agent/references/grounding-guide.md
      SYNC-COPY:   review-agent/references/grounding-guide.md
-     content-hash: b3949f31
+     content-hash: b3949f31  (first 8 hex of: tail -n +5 <file> | sha256sum)
      Keep both copies identical. Run `diff` to verify before committing. -->
 
 # Grounding Guide

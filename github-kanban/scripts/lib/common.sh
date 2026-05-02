@@ -28,7 +28,7 @@ get_wip_limit() {
   limit=$(jq -r --arg s "$stage" '.wip_limits[$s] // empty' "$config" 2>/dev/null)
   if [ -z "$limit" ]; then
     case "$stage" in
-      backlog)      echo 10 ;;
+      backlog)      echo 20 ;;
       in-progress)  echo 3 ;;
       in-review)    echo 5 ;;
       *)            echo "" ;;

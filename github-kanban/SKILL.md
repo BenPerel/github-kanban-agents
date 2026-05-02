@@ -33,7 +33,7 @@ you need for script calls.
 
 | Column | Label | WIP Limit | Board Option ID |
 |--------|-------|-----------|-----------------| 
-| Backlog | `stage:backlog` | 10 | `<BACKLOG_OPTION_ID>` |
+| Backlog | `stage:backlog` | 20 | `<BACKLOG_OPTION_ID>` |
 | Ready | `stage:ready` | — | `<READY_OPTION_ID>` |
 | In progress | `stage:in-progress` | 3 | `<IN_PROGRESS_OPTION_ID>` |
 | Human Review (mid-dev) | `stage:human-review` | — | `<HUMAN_REVIEW_MID_DEV_OPTION_ID>` |

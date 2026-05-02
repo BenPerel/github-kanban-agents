@@ -23,6 +23,12 @@ dev-agent with zero prior context.
 
 ## Process
 
+### 0. Bootstrap
+
+Invoke `/github-kanban` to load board context (project IDs, field IDs, WIP
+limits). This validates that `.kanban-config.json` exists and gives you
+awareness of the current board state before publishing a batch of issues.
+
 ### 1. Gather context
 
 Work from whatever is already in the conversation context. If the user passes

@@ -118,7 +118,7 @@ If all hypotheses are refuted:
 
 1. **Write a regression test first** that captures the exact failure mode
    from Phase 2. This test should fail before the fix and pass after.
-   - Follow the project's TDD guide (`references/tdd-guide.md`) for test
+   - Follow the project's TDD guide (`dev-agent/references/tdd-guide.md`) for test
      structure
    - The regression test becomes the first "Red" in the TDD cycle
 2. **Implement the minimal fix** that makes the regression test pass

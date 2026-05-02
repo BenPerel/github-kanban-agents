@@ -39,6 +39,24 @@ highest method on this list that works for your situation:
 in seconds, not minutes. If your feedback loop takes longer than 30 seconds,
 find a way to narrow it (smaller dataset, isolated component, cached setup).
 
+### Iterate on the Loop
+
+Treat the feedback loop as a product. Once you have *a* loop, ask:
+
+- Can I make it **faster**? (Cache setup, skip unrelated init, narrow the test scope.)
+- Can I make the signal **sharper**? (Assert on the specific symptom, not "didn't crash".)
+- Can I make it more **deterministic**? (Pin time, seed RNG, isolate filesystem, freeze network.)
+
+A 30-second flaky loop is barely better than no loop. A 2-second deterministic
+loop is a debugging superpower.
+
+### Non-deterministic Bugs
+
+The goal is not a clean repro but a **higher reproduction rate**. Loop the
+trigger 100×, parallelise, add stress, narrow timing windows, inject sleeps.
+A 50%-flake bug is debuggable; 1% is not — keep raising the rate until it's
+debuggable.
+
 ## Phase 2: Reproduce
 
 Run your feedback loop and confirm it produces the failure described in the

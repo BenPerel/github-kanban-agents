@@ -15,6 +15,10 @@ Mark items as you complete them — skipping a step often creates rework later.
   - Are new files needed?
   - Which tests need to be written?
   - Does this affect any shared interfaces or APIs?
+  - Does this create or modify a module? If so, review `references/deep-modules-guide.md`:
+    - Aim for deep modules (small interface, rich implementation)
+    - Apply the deletion test to any new abstraction
+    - Only introduce seams where behavior actually varies
 - [ ] If the plan affects architecture significantly, consider escalating to
       Human Review (mid-dev) before investing implementation time
 

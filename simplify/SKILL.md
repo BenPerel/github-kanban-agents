@@ -1,7 +1,7 @@
 ---
 name: simplify
 description: >
-  Review changed code for reuse, quality, and efficiency, then fix any issues
+  Review changed code for reuse, quality, efficiency, and architecture, then fix any issues
   found. Use when the user says "simplify", "clean up", "review code quality",
   or after completing implementation work. Also triggered by /simplify or
   "polish the code".
@@ -18,9 +18,9 @@ Run `git diff` (or `git diff HEAD` if there are staged changes) to see what
 changed. If there are no git changes, review the most recently modified files
 that the user mentioned or that you edited earlier in this conversation.
 
-## Phase 2: Three Reviews
+## Phase 2: Four Reviews
 
-Perform the following three reviews with parallel subagents if available, otherwise review sequentially:
+Perform the following four reviews with parallel subagents if available, otherwise review sequentially:
 
 ### Review 1: Code Reuse
 
@@ -82,9 +82,25 @@ Review the same changes for efficiency:
 7. **Overly broad operations**: reading entire files when only a portion
    is needed, loading all items when filtering for one
 
+### Review 4: Architecture
+
+Review the same changes for structural depth (see `dev-agent/references/deep-modules-guide.md`):
+
+1. **Shallow modules**: new abstractions where the interface is nearly as
+   complex as the implementation — apply the deletion test. If deleting the
+   module would concentrate complexity rather than spread it, the module
+   is a pass-through
+2. **Premature seams**: new interfaces or adapter patterns introduced where
+   only one implementation exists and no variation is expected
+3. **Leaking depth**: changes that push complexity from a module's
+   implementation into its interface (adding parameters, exposing internals,
+   requiring callers to know ordering constraints)
+4. **Missing depth**: logic duplicated across multiple callers that could be
+   concentrated behind a single deep interface
+
 ## Phase 3: Fix Issues
 
-Aggregate findings from all three reviews and fix each issue directly.
+Aggregate findings from all four reviews and fix each issue directly.
 If a finding is a false positive or not worth addressing, note it and
 move on — do not argue with the finding, just skip it.
 

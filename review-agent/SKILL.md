@@ -28,7 +28,7 @@ dev-agent → implements issue → creates PR → stage:in-review
                           ↓                     ↓                     ↓
                     Simple/safe           Complex/sensitive       Clear problems
                     Merge → Done          Escalate → Human       Request changes
-                                          Review (post-review)   → In Progress
+                                          Review (post-review)   → Ready (p0)
 ```
 
 The **PR is your prompt**. The dev-agent wrote the PR description for you — it
@@ -253,7 +253,7 @@ Three outcomes, in order of precedence:
 1. `gh pr review <PR> --request-changes` — structured body with findings,
    file paths, and fix suggestions
 2. Move issue to `stage:ready` via `/github-kanban` and set priority to `p0`
-   (dev-agent only picks up `stage:ready` issues — `in-progress` is a dead end)
+   (dev-agent only picks up `stage:ready` issues — `stage:in-progress` is a dead end)
 3. Comment on the **issue** with findings formatted as a prompt for the
    dev-agent (zero context — include file paths, what's wrong, how to fix)
 

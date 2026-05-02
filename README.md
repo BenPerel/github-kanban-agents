@@ -141,14 +141,15 @@ Structured diagnostic methodology for bugs and failures with unclear root cause.
 - **10-method feedback loop hierarchy** — from failing test (fastest) down to human-in-the-loop (last resort)
 - **Hypothesis-driven debugging** — prevents tunnel-vision on first plausible explanation
 - **Tagged instrumentation** — `[DEBUG-xxxx]` tags for single-grep cleanup
+- **Non-deterministic bugs** — techniques for raising reproduction rate on flaky failures
 - **Regression test integration** — flows naturally into the TDD cycle
 - **Escalation criteria** — when to stop diagnosing and escalate to human review
 
 ### simplify
 
-Code review and cleanup skill — reviews changed code for reuse, quality, and efficiency, then fixes issues found.
+Code review and cleanup skill — reviews changed code for reuse, quality, efficiency, and architecture, then fixes issues found.
 
-**Flow:** identify changes → three parallel reviews (reuse, quality, efficiency) → fix issues
+**Flow:** identify changes → four parallel reviews (reuse, quality, efficiency, architecture) → fix issues
 
 ## GitHub Actions (optional, free)
 

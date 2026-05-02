@@ -50,7 +50,7 @@ files — read them when you reach that phase, not all upfront.
 7. **Validate** — Lint, type check, security, full test suite
 8. **Commit → push → PR** — With `Closes #N`, written for the review agent
 9. **Move issue** → `stage:in-review` via `/github-kanban`
-10. **Exit worktree** (`../../.agents/skills/...` keep) → report summary
+10. **Exit worktree** (`.agents/skills/...` keep) → report summary
 
 ---
 
@@ -154,7 +154,7 @@ covers validation, commit standards, and escalation triggers.
 
 If you hit any trigger from `references/sdlc-checklist.md` § Escalation Triggers:
 comment on the issue (what you did, what's blocking), run
-cd "$(bash ../../.agents/skills/dev-agent/scripts/exit-worktree.sh keep)"`, stop.
+cd "$(bash .agents/skills/dev-agent/scripts/exit-worktree.sh keep)"`, stop.
 
 ## Phase 7: Validation
 
@@ -239,7 +239,7 @@ an "Installed Workflows" section at the bottom of the kanban skill).
 
 1. Exit the worktree with keep:
    ```bash
-   cd "$(bash ../../.agents/skills/dev-agent/scripts/exit-worktree.sh keep)"
+   cd "$(bash .agents/skills/dev-agent/scripts/exit-worktree.sh keep)"
    ```
    The branch must persist for the PR.
 2. File follow-up issues for anything discovered during implementation

@@ -47,6 +47,7 @@ else
     echo "ERROR: Not inside a worktree directory and no name provided" >&2
     echo "  CWD:         ${CWD}" >&2
     echo "  Expected in: ${WORKTREE_DIR}/" >&2
+    echo "  Try: cd \"\$(bash .agents/skills/dev-agent/scripts/exit-worktree.sh <keep|remove> \"<name>\")\"" >&2
     exit 1
   fi
 fi

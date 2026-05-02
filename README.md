@@ -131,7 +131,11 @@ Autonomous review agent that picks up PRs from In Review, performs systematic co
 - **Follow-up issues as prompts** — discovered improvements filed with full context for agent pickup
 - **Duplicate PR detection** — handles race condition edge case of multiple PRs per issue
 
+<<<<<<< HEAD
 ### diagnose
+=======
+### prd-to-issue
+>>>>>>> ae9336a (fix(prd-to-issue): rename to singular, remove invalid --parent flag, fix heading case)
 
 Structured diagnostic methodology for bugs and failures with unclear root cause. Used by dev-agent (bug issues) and review-agent (test/deployment failures).
 

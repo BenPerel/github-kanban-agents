@@ -1,12 +1,12 @@
 ---
-name: prd-to-issues
+name: prd-to-issue
 description: >
   Break a plan, spec, or PRD into independently-grabbable issues on the
   GitHub project board using tracer-bullet vertical slices.
   Use when user wants to convert a plan into issues, create implementation
   tickets, or break down work into issues.
   TRIGGER on: "prd to issues", "break this down", "create issues from",
-  "convert to tickets", "slice this into issues", "/prd-to-issues",
+  "convert to tickets", "slice this into issues", "/prd-to-issue",
   "break down the PRD", "file the implementation issues".
 compatibility: Requires gh (GitHub CLI), jq, and git.
 ---
@@ -57,7 +57,7 @@ over HITL where possible.
 - A completed slice is demoable or verifiable on its own
 - Prefer many thin slices over few thick ones
 
-### 4. Propose Breakdown (Confidence-Based Execution)
+### 4. Propose breakdown (Confidence-Based Execution)
 
 Draft the proposed breakdown as a numbered list. For each slice, show:
 
@@ -106,8 +106,7 @@ bash .agents/skills/github-kanban/scripts/create-issue.sh \
   --priority p2 \
   --size m \
   --stage ready \
-  --blocked-by <BLOCKER_ISSUE_NUMBER> \
-  --parent <PARENT_ISSUE_NUMBER>
+  --blocked-by <BLOCKER_ISSUE_NUMBER>
 ```
 
 **Stage selection:**

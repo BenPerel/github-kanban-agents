@@ -252,7 +252,8 @@ Three outcomes, in order of precedence:
 
 1. `gh pr review <PR> --request-changes` — structured body with findings,
    file paths, and fix suggestions
-2. Move issue to `stage:in-progress` via `/github-kanban`
+2. Move issue to `stage:ready` via `/github-kanban` and set priority to `p0`
+   (dev-agent only picks up `stage:ready` issues — `in-progress` is a dead end)
 3. Comment on the **issue** with findings formatted as a prompt for the
    dev-agent (zero context — include file paths, what's wrong, how to fix)
 

@@ -101,9 +101,10 @@ Write the issue comment as a **prompt for the dev-agent** — it has zero contex
 
 ### Stage transition
 
-Move the issue from `stage:in-review` to `stage:in-progress`. The dev-agent's
-branch and worktree may still exist — `stage:in-progress` signals "active work
-needing continuation" rather than "fresh issue to pick up."
+Move the issue from `stage:in-review` to `stage:ready` and set priority to
+`p0`. The dev-agent only queries `stage:ready` for work — moving to
+`stage:in-progress` would strand the issue since no agent polls that stage.
+Priority `p0` ensures the fix is picked up before lower-priority work.
 
 ## Easy Fix Criteria
 

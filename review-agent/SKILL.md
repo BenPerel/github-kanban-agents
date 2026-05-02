@@ -326,7 +326,7 @@ After completing the review, report a summary:
 | Scenario | Action |
 |----------|--------|
 | No issues in `stage:in-review` | Report "no PRs to review" and stop |
-| Issue in review but no open PR | Comment on issue, move to `stage:in-progress`, pick next |
+| Issue in review but no open PR | Comment on issue, move to `stage:ready`, pick next |
 | Tests fail during review | Request changes with test failure details |
 | Cannot run tests (missing deps, env issues) | Escalate to human review with explanation |
 | PR has merge conflicts | Escalate to human review (dev-agent needs to rebase) |

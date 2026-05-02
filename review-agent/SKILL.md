@@ -206,7 +206,7 @@ proceed to Phase 7. Cleanup happens after Phase 6.
    git commit -m "fix(<scope>): <description of fix>"
    ```
 3. Note each fix for your review comment
-4. After all fixes, re-run tests to verify nothing broke
+4. MUST re-run tests after all fixes — even for trivial changes
 
 Do **not** push yet — Phase 6 may add more commits.
 
@@ -220,7 +220,7 @@ If you skipped Phase 5 (no easy fixes) but are merging, create the worktree now
 using the steps from Phase 5 before running `/simplify`.
 
 If `/simplify` makes changes, they are committed separately from your Phase 5
-fixes. Re-run tests after simplification to verify nothing broke.
+fixes. MUST re-run tests after simplification — even for trivial changes.
 
 **When to run `/simplify`:** You are merging the PR (Phase 7c path).
 
@@ -321,6 +321,19 @@ If the project has no automated deployment or the PR doesn't trigger a deploy
 to `stage:done` immediately after merging.
 
 ## Phase 8: Create Follow-up Issues
+
+Review your non-blocking and advisory findings from Phases 3-4. For each,
+decide whether to file a follow-up issue or let it stay in the PR comment.
+
+**File a follow-up issue** if the finding is:
+- A security advisory, deprecation warning, or performance concern
+- Actionable by a dev-agent with zero context (clear scope, concrete fix)
+- Not addressed by your Phase 5 fixes or the current PR
+
+**Skip follow-up** if the finding is:
+- Opinion-based or stylistic with no clear right answer
+- Too small to warrant its own issue (single-line nit)
+- Already fixed in Phase 5
 
 Create follow-up issues via `/github-kanban` using the agent-ready format.
 

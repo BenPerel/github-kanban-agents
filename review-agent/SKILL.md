@@ -222,10 +222,15 @@ using the steps from Phase 5 before running `/simplify`.
 If `/simplify` makes changes, they are committed separately from your Phase 5
 fixes. Re-run tests after simplification to verify nothing broke.
 
-**Skip `/simplify`** if:
+**When to run `/simplify`:** You are merging the PR (Phase 7c path).
+
+**When to skip `/simplify`:**
+- You are requesting changes (Phase 7a) — code needs rework
+- You are escalating to human review (Phase 7b) — let the human decide scope
 - The PR is documentation-only
 - The PR is a dependency update
-- You are requesting changes (no point simplifying code that needs rework)
+
+**Multi-PR sessions:** Run `/simplify` for each PR you merge, not just the first.
 
 ### Push and cleanup
 
@@ -237,7 +242,7 @@ After Phase 5 fixes and/or Phase 6 simplification:
    ```
 2. Exit the worktree and remove it:
    ```bash
-   cd "$(bash ../../.agents/skills/dev-agent/scripts/exit-worktree.sh remove "review+<PR_NUMBER>")"
+   cd "$(bash .agents/skills/dev-agent/scripts/exit-worktree.sh remove "review+<PR_NUMBER>")"
    ```
 3. Proceed to Phase 7
 
@@ -253,7 +258,11 @@ Three outcomes, in order of precedence:
 
 1. `gh pr review <PR> --request-changes` — structured body with findings,
    file paths, and fix suggestions
-2. Move issue to `stage:ready` via `/github-kanban` and set priority to `p0`
+2. Move issue to `stage:ready` and set priority to `p0`:
+   ```bash
+   bash .agents/skills/github-kanban/scripts/move-issue.sh --issue <NUMBER> --to ready
+   bash .agents/skills/github-kanban/scripts/set-priority.sh --issue <NUMBER> --priority p0
+   ```
    (dev-agent only picks up `stage:ready` issues — `stage:in-progress` is a dead end)
 3. Comment on the **issue** with findings formatted as a prompt for the
    dev-agent (zero context — include file paths, what's wrong, how to fix)
@@ -270,7 +279,11 @@ Three outcomes, in order of precedence:
 
 1. `gh pr review <PR> --approve` (skip if solo dev self-review error)
 2. `gh pr merge <PR> --merge --delete-branch` (note: ignore any local branch deletion errors if a worktree is still attached)
-3. Archive old Done items (see "Board Maintenance" in `/github-kanban`)
+3. Archive old Done items and clean stale worktrees:
+   ```bash
+   bash .agents/skills/github-kanban/scripts/archive-done.sh
+   bash .agents/skills/dev-agent/scripts/cleanup-worktrees.sh
+   ```
 
 **Bias: when in doubt, escalate.** False escalation costs 2 minutes of
 human time. False merge costs a bug in production.

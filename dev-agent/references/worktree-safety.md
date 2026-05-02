@@ -81,8 +81,9 @@ cd "$(bash .agents/skills/dev-agent/scripts/exit-worktree.sh keep)"
 ```
 
 The worktree directory and branch must remain on disk because the PR
-references the branch. After merge, the human (or a cleanup agent) can
-remove stale worktrees.
+references the branch. After merge, run
+`bash .agents/skills/dev-agent/scripts/cleanup-worktrees.sh` to remove
+stale worktrees (it detects merged PRs automatically).
 
 **Never use `remove` after creating a PR** — it deletes the branch
 and breaks the PR.

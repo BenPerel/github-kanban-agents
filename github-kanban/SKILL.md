@@ -99,6 +99,25 @@ The script will:
 
 Run `bash .agents/skills/github-kanban/scripts/move-issue.sh --help` for full usage.
 
+## Changing Priority
+
+Use `bash .agents/skills/github-kanban/scripts/set-priority.sh` to change an issue's priority label and board priority field atomically:
+
+```bash
+bash .agents/skills/github-kanban/scripts/set-priority.sh --issue 15 --priority p0
+```
+
+Options:
+- `--issue NUMBER` — Issue number (required)
+- `--priority p0|p1|p2` — New priority (required)
+
+The script will:
+1. Detect the current `priority:*` label and remove it
+2. Add the new `priority:*` label
+3. Update the board priority field
+
+Run `bash .agents/skills/github-kanban/scripts/set-priority.sh --help` for full usage.
+
 ## Checking WIP Limits
 
 Use `bash .agents/skills/github-kanban/scripts/check-wip.sh` to check whether a stage has room:

@@ -1,6 +1,6 @@
 # github-kanban-agents
 
-Autonomous AI agent skills for the full software development lifecycle — powered by a GitHub Projects kanban board. Agents pick up issues, implement with TDD, review PRs, merge, and verify deployment. Includes dev-agent, review-agent, diagnose, simplify, and github-kanban skills. Works with Gemini, Claude, and 40+ agents.
+Autonomous AI agent skills for the full software development lifecycle — powered by a GitHub Projects kanban board. Agents pick up issues, implement with TDD, review PRs, merge, and verify deployment. Includes dev-agent, review-agent, prd-to-issue, diagnose, simplify, and github-kanban skills. Works with Gemini, Claude, and 40+ agents.
 
 ## Installation
 
@@ -12,7 +12,7 @@ Autonomous AI agent skills for the full software development lifecycle — power
 npx skills add BenPerel/github-kanban-agents -y --skill "*" --scope local
 ```
 
-This installs all 5 skills to your detected agents (Claude Code, Antigravity, Gemini CLI, Cursor, Codex, and [40+ more](https://github.com/vercel-labs/skills#available-agents)).
+This installs all 6 skills to your detected agents (Claude Code, Antigravity, Gemini CLI, Cursor, Codex, and [40+ more](https://github.com/vercel-labs/skills#available-agents)).
 
 ### Gemini CLI
 
@@ -27,6 +27,7 @@ git clone https://github.com/BenPerel/github-kanban-agents.git
 ln -s /path/to/github-kanban-agents/dev-agent .gemini/skills/dev-agent
 ln -s /path/to/github-kanban-agents/review-agent .gemini/skills/review-agent
 ln -s /path/to/github-kanban-agents/simplify .gemini/skills/simplify
+ln -s /path/to/github-kanban-agents/prd-to-issue .gemini/skills/prd-to-issue
 ln -s /path/to/github-kanban-agents/diagnose .gemini/skills/diagnose
 # github-kanban requires setup — see below
 ```
@@ -84,6 +85,19 @@ Board operations skill — manages issue lifecycle, stage transitions, WIP limit
 - `move-issue.sh` — move issues between stages (WIP check, label swap, board update)
 - `check-wip.sh` — check WIP limits for a stage
 - `archive-done.sh` — archive old Done items from the board
+
+### prd-to-issue
+
+Plan-to-issues breakdown skill — converts a plan, spec, or PRD into independently-grabbable issues using tracer-bullet vertical slices. Each issue is a self-contained prompt ready for dev-agent pickup.
+
+**Flow:** gather context → explore codebase → draft vertical slices → propose breakdown → publish issues via `create-issue.sh`
+
+**Covers:**
+- **Tracer bullet slicing** — thin vertical slices through all layers (schema, API, UI, tests), not horizontal layer-by-layer splits
+- **HITL vs AFK classification** — flags which slices need human input vs. which are fully autonomous
+- **Confidence-based execution** — publishes autonomously when confident, pauses only for genuine ambiguity
+- **Dependency-ordered publishing** — creates blockers first so real `#N` references are available for `--blocked-by`
+- **Issues as prompts** — every issue body is a self-contained prompt for a dev-agent with zero prior context
 
 ### dev-agent
 
@@ -161,7 +175,7 @@ Also enable the free built-in project automations (must be done in the UI):
 The kanban skill is designed for safety and controlled autonomy. It ships with a sensible default workflow (Backlog → Ready → In Progress → In Review → Done). You can easily configure the installed skills in your local project to set your own boundaries:
 
 - **Size-based Autonomy Gates** — By default, the `review-agent` automatically merges `XS` and `S` sized PRs if tests pass. Anything sized `M` or larger is automatically escalated to `Human Review`. This prevents agents from unilaterally YOLOing large, complex changes. (You can adjust this threshold safely inside the installed `review-agent` SKILL.md).
-- **Hard WIP Limits** — Prevent agent runaway loops by capping concurrent work. Agents respect strict Kanban WIP limits (defaults: Backlog 10, In Progress 3, In Review 5), configurable in `.kanban-config.json`. Agents finish what they start instead of endlessly pulling new tickets.
+- **Hard WIP Limits** — Prevent agent runaway loops by capping concurrent work. Agents respect strict Kanban WIP limits (defaults: Backlog 20, In Progress 3, In Review 5), configurable in `.kanban-config.json`. Agents finish what they start instead of endlessly pulling new tickets.
 - **Kanban columns** — add, remove, or rename stages.
 - **Label taxonomy** — change label prefixes or add new label types (e.g. adapt priorities, add P3/P4, or resize labels).
 

@@ -89,8 +89,8 @@ You start with zero context. Bootstrap yourself:
      gh pr list --search "closes #<ISSUE>" --state open --json number,url
      ```
    - If no open PR found, this is an orphaned in-review issue. Comment on the
-     issue ("No open PR found — moving back to in-progress"), move to
-     `stage:in-progress` via `/github-kanban`, and pick the next candidate.
+     issue ("No open PR found — moving back to ready"), move to
+     `stage:ready` with `p0` priority via `/github-kanban`, and pick the next candidate.
 3. Check the PR for an existing claim marker (`> Review in progress`). If
    another agent already posted one, skip to the next candidate.
 4. Pick the first valid, unclaimed candidate.
@@ -100,7 +100,7 @@ You start with zero context. Bootstrap yourself:
 1. Fetch the issue details
 2. Verify it's in `stage:in-review` and has an open PR
 3. If not in `stage:in-review` — report the current stage and stop
-4. If no open PR — comment and move to `stage:in-progress` as above
+4. If no open PR — comment and move to `stage:ready` with `p0` priority as above
 
 ### Claiming
 

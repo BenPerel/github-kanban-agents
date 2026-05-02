@@ -42,6 +42,7 @@ large or sensitive for autonomous merge and needs human sign-off before merging.
 | In progress → In review | `stage:in-progress` | `stage:in-review` | `bash scripts/move-issue.sh --issue N --to in-review` |
 | Human Review → In progress | `stage:human-review` | `stage:in-progress` | `bash scripts/move-issue.sh --issue N --to in-progress` |
 | In review → Human Review (post-review) | `stage:in-review` | `stage:human-review` | `bash scripts/move-issue.sh --issue N --to human-review-post` |
+| In review → Ready (rejected/orphaned) | `stage:in-review` | `stage:ready` | `bash scripts/move-issue.sh --issue N --to ready` |
 | In review → Done | `stage:in-review` | `stage:done` | `bash scripts/move-issue.sh --issue N --to done` |
 
 ## Fast-Track Transitions

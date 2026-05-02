@@ -100,7 +100,7 @@ Review the same changes for structural depth (see `dev-agent/references/deep-mod
 
 ## Phase 3: Fix Issues
 
-Aggregate findings from all three reviews and fix each issue directly.
+Aggregate findings from all four reviews and fix each issue directly.
 If a finding is a false positive or not worth addressing, note it and
 move on — do not argue with the finding, just skip it.
 

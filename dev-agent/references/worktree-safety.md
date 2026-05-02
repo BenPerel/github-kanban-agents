@@ -66,6 +66,11 @@ prior `git worktree add --relative-paths`), the scripts auto-remove it.
 - **Stay in scope**: Only modify files related to your issue. Other agents
   may be working on other files in their own worktrees. Touching shared
   files creates merge conflicts.
+- **Agent config directories** (`.claude/`, `.gemini/`, `.cursor/`, `.agents/`)
+  must be symlinked from the main repo via `.worktreelinks`. Without them,
+  agent permissions, skills, and script paths (`bash .agents/skills/...`)
+  won't resolve. The `setup.sh` script creates `.worktreelinks` with these
+  defaults automatically.
 
 ## Exiting a Worktree
 

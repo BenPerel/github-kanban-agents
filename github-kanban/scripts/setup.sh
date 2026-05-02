@@ -358,6 +358,21 @@ jq -n \
 
 echo "✓ Generated: $CONFIG_FILE"
 
+# --- Create .worktreelinks with agent config defaults ---
+if [[ ! -f ".worktreelinks" ]]; then
+  cat > ".worktreelinks" << 'WORKTREELINKS'
+# Agent config directories — symlinked so permissions and skills
+# resolve correctly in worktrees. Add project-specific entries below.
+.claude
+.gemini
+.cursor
+.agents
+WORKTREELINKS
+  echo "✓ Created .worktreelinks with agent config defaults"
+else
+  echo "✓ .worktreelinks already exists — skipping"
+fi
+
 # --- Pipeline Configuration (optional) ---
 if [ -t 0 ]; then
   echo ""

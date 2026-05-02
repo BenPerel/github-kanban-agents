@@ -193,7 +193,9 @@ Two optional config files control how worktrees behave:
   Useful for `.env` files, local configs, or secrets that aren't in git but are needed to run/test.
 
 - **`.worktreelinks`** — List directories to symlink instead of duplicate.
-  Prevents disk bloat from large directories like `node_modules/`.
+  Critical for agent config directories (permissions, skills, and script paths
+  won't resolve in worktrees without them). Also useful for large directories
+  like `node_modules/` to save disk space.
 
 Example `.worktreeinclude`:
 ```
@@ -203,9 +205,17 @@ config/secrets/*.yaml
 
 Example `.worktreelinks`:
 ```
+# Agent config — ensures permissions and skills work in worktrees
+.claude
+.gemini
+.cursor
+.agents
+# Large directories — saves disk space (optional)
 node_modules
 .venv
 ```
+
+> **Tip**: The `setup.sh` script creates `.worktreelinks` with agent config defaults automatically. Commit this file so all developers and agents benefit.
 
 ## Known Limitations
 

@@ -28,7 +28,7 @@ dev-agent → implements issue → creates PR → stage:in-review
                           ↓                     ↓                     ↓
                     Simple/safe           Complex/sensitive       Clear problems
                     Merge → Done          Escalate → Human       Request changes
-                                          Review (post-review)   → In Progress
+                                          Review (post-review)   → Ready (p0)
 ```
 
 The **PR is your prompt**. The dev-agent wrote the PR description for you — it
@@ -90,8 +90,8 @@ You start with zero context. Bootstrap yourself:
        --jq '[.[] | select(.closingIssuesReferences[]?.number == <ISSUE>)]'
      ```
    - If no open PR found, this is an orphaned in-review issue. Comment on the
-     issue ("No open PR found — moving back to in-progress"), move to
-     `stage:in-progress` via `/github-kanban`, and pick the next candidate.
+     issue ("No open PR found — moving back to ready"), move to
+     `stage:ready` with `p0` priority via `/github-kanban`, and pick the next candidate.
 3. Check the PR for an existing claim marker (`> Review in progress`). If
    another agent already posted one, skip to the next candidate.
 4. Pick the first valid, unclaimed candidate.
@@ -101,7 +101,7 @@ You start with zero context. Bootstrap yourself:
 1. Fetch the issue details
 2. Verify it's in `stage:in-review` and has an open PR
 3. If not in `stage:in-review` — report the current stage and stop
-4. If no open PR — comment and move to `stage:in-progress` as above
+4. If no open PR — comment and move to `stage:ready` with `p0` priority as above
 
 ### Claiming
 
@@ -253,7 +253,8 @@ Three outcomes, in order of precedence:
 
 1. `gh pr review <PR> --request-changes` — structured body with findings,
    file paths, and fix suggestions
-2. Move issue to `stage:in-progress` via `/github-kanban`
+2. Move issue to `stage:ready` via `/github-kanban` and set priority to `p0`
+   (dev-agent only picks up `stage:ready` issues — `stage:in-progress` is a dead end)
 3. Comment on the **issue** with findings formatted as a prompt for the
    dev-agent (zero context — include file paths, what's wrong, how to fix)
 
@@ -330,7 +331,7 @@ After completing the review, report a summary:
 | Scenario | Action |
 |----------|--------|
 | No issues in `stage:in-review` | Report "no PRs to review" and stop |
-| Issue in review but no open PR | Comment on issue, move to `stage:in-progress`, pick next |
+| Issue in review but no open PR | Comment on issue, move to `stage:ready`, pick next |
 | Tests fail during review | Request changes with test failure details |
 | Cannot run tests (missing deps, env issues) | Escalate to human review with explanation |
 | PR has merge conflicts | Escalate to human review (dev-agent needs to rebase) |

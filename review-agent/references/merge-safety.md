@@ -2,6 +2,10 @@
 
 When to merge, escalate, or request changes. Read during Phase 7.
 
+**Max auto-merge size: `size:s`** — the review agent may only merge PRs sized
+`size:xs` or `size:s`. Anything larger requires escalation. To change this
+threshold, update this single line — the rest of the document references it.
+
 ## Decision Flow
 
 ```
@@ -13,7 +17,7 @@ Has blocking findings?
 │                └─ No (architectural/security) → ESCALATE
 │
 └─ No blocking findings
-   ├─ size:m or larger? → ESCALATE
+   ├─ Exceeds max auto-merge size? → ESCALATE
    ├─ Security-sensitive changes? → ESCALATE
    ├─ Architectural changes? → ESCALATE
    ├─ Uncertain about correctness? → ESCALATE
@@ -25,7 +29,7 @@ Has blocking findings?
 
 **ALL must be true** to merge:
 
-- [ ] Size is `size:xs` or `size:s`
+- [ ] Size is within the max auto-merge size (see top of file)
 - [ ] Full test suite passes
 - [ ] Lint, format, and type checks pass
 - [ ] No security-sensitive changes
@@ -55,7 +59,7 @@ gh pr merge <PR> --merge --delete-branch
 
 **ANY one triggers escalation:**
 
-- `size:m`, `size:l`, or `size:xl`
+- Exceeds the max auto-merge size (see top of file)
 - Security-related changes (auth, permissions, encryption, tokens — even if
   they look correct)
 - Architectural changes (shared interfaces, database schemas, API contracts,

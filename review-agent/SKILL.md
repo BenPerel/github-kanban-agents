@@ -232,19 +232,32 @@ fixes. MUST re-run tests after simplification — even for trivial changes.
 
 **Multi-PR sessions:** Run `/simplify` for each PR you merge, not just the first.
 
-### Push and cleanup
+### Rebase, push, and cleanup
 
-After Phase 5 fixes and/or Phase 6 simplification:
+After Phase 5 fixes and/or Phase 6 simplification, verify the PR is still
+clean against the latest base branch before pushing:
 
-1. Push all commits:
+1. Rebase onto the latest base branch:
    ```bash
-   git push origin <branch-name>
+   DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||' || echo "main")
+   git fetch origin "$DEFAULT_BRANCH"
+   git rebase "origin/$DEFAULT_BRANCH"
    ```
-2. Exit the worktree and remove it:
+   - **Rebase fails** (merge conflict): run `git rebase --abort`. This is a
+     **blocking finding** — skip the push and proceed to Phase 7 (escalate).
+   - **Rebase succeeds**: re-run the full test suite. If tests fail, this is a
+     **blocking finding** (the PR was green on an older base but breaks on
+     current). Skip the push and proceed to Phase 7 (request changes with the
+     failure details).
+2. Push all commits (including the rebase):
+   ```bash
+   git push --force-with-lease origin <branch-name>
+   ```
+3. Exit the worktree and remove it:
    ```bash
    cd "$(bash .agents/skills/dev-agent/scripts/exit-worktree.sh remove "review+<PR_NUMBER>")"
    ```
-3. Proceed to Phase 7
+4. Proceed to Phase 7
 
 ## Phase 7: Decision
 
@@ -360,7 +373,7 @@ After completing the review, report a summary:
 | Issue in review but no open PR | Comment on issue, move to `stage:ready`, pick next |
 | Tests fail during review | Request changes with test failure details |
 | Cannot run tests (missing deps, env issues) | Escalate to human review with explanation |
-| PR has merge conflicts | Escalate to human review (dev-agent needs to rebase) |
+| PR has merge conflicts | Rebase step in Phase 6 catches this — escalate to human review |
 | Worktree creation fails (branch checked out) | Another agent may be on this PR — skip fixes, proceed to Phase 7 |
 | `gh pr review --approve` fails (solo dev) | Skip approve, merge directly if all criteria met |
 | Merge fails after approval | Report error, leave in current stage, stop |

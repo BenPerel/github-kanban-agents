@@ -125,7 +125,7 @@ Autonomous review agent that picks up PRs from In Review, performs systematic co
 - **Systematic review** — diff reading, test execution, security scan, scope verification, grounding checks
 - **Easy fixes** — trivial issues (typos, 1-2 line fixes) fixed directly on the PR branch
 - **Code simplification** — invokes `/simplify` on changed files before merge
-- **Three-way decision** — merge (size:xs/s, all clear), escalate (size:m+, security, uncertainty), request changes (clear problems)
+- **Three-way decision** — merge (within auto-merge size, all clear), escalate (larger/security/uncertainty), request changes (clear problems)
 - **Solo dev handling** — graceful skip of `gh pr review --approve` when self-review fails
 - **Human re-review** — picks up issues returned to `stage:in-review` after human feedback
 - **Follow-up issues as prompts** — discovered improvements filed with full context for agent pickup

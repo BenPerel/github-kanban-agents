@@ -4,7 +4,7 @@ When to merge, escalate, or request changes. Read during Phase 7.
 
 **Max auto-merge size: `size:s`** — the review agent may only merge PRs sized
 `size:xs` or `size:s`. Anything larger requires escalation. To change this
-threshold, update this single line — the rest of the document references it.
+threshold, update this definition — the rest of the document references it.
 
 ## Decision Flow
 

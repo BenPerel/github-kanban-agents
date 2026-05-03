@@ -32,6 +32,7 @@ Has blocking findings?
 - [ ] Scope matches issue requirements
 - [ ] No open questions or uncertainty
 - [ ] No merge conflicts
+- [ ] Branch is rebased onto latest base branch (Phase 6 rebase step)
 - [ ] PR description is complete and self-contained
 - [ ] No blocking findings remain after Phase 5 fixes
 
@@ -61,7 +62,8 @@ gh pr merge <PR> --merge --delete-branch
   core abstractions)
 - Uncertainty about correctness — if you're not confident the code is right
 - Domain-specific code where the grounding source was unavailable
-- Merge conflicts (dev-agent needs to rebase, human should coordinate)
+- Merge conflicts — rebase failed during Phase 6 freshness check, or
+  conflicts detected at merge time
 - Multiple valid approaches with significant tradeoffs
 - Incomplete review (couldn't run tests, missing dependencies, env issues)
 

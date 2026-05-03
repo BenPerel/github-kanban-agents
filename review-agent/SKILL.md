@@ -244,12 +244,14 @@ clean against the latest base branch before pushing:
    git rebase "origin/$DEFAULT_BRANCH"
    ```
    - **Rebase fails** (merge conflict): run `git rebase --abort`. This is a
-     **blocking finding** — skip the push and proceed to Phase 7 (escalate).
+     **blocking finding** — skip the push, exit the worktree (step 3), and
+     proceed to Phase 7 (escalate).
    - **Rebase succeeds**: re-run the full test suite. If tests fail, this is a
      **blocking finding** (the PR was green on an older base but breaks on
-     current). Skip the push and proceed to Phase 7 (request changes with the
-     failure details).
-2. Push all commits (including the rebase):
+     current). Skip the push, exit the worktree (step 3), and proceed to
+     Phase 7 — request changes with the failure details if the fix is within
+     this PR's scope, or escalate if it requires cross-PR coordination.
+2. Push all commits (`--force-with-lease` required — rebase rewrites history):
    ```bash
    git push --force-with-lease origin <branch-name>
    ```

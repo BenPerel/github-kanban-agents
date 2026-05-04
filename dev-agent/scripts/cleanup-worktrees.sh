@@ -106,8 +106,10 @@ while IFS= read -r wt_line; do
   fi
 
   # --- Safety: skip dirty worktrees ---
+  # Use -uno to ignore untracked files (e.g., symlinks from .worktreelinks)
+  # that would otherwise make every worktree appear dirty.
   if [[ -d "$WT_PATH" ]]; then
-    CHANGES=$(git -C "$WT_PATH" status --porcelain 2>/dev/null | wc -l || echo "0")
+    CHANGES=$(git -C "$WT_PATH" status --porcelain -uno 2>/dev/null | wc -l || echo "0")
     if [[ "$CHANGES" -gt 0 ]]; then
       echo "  WARNING: ${WT_NAME} has ${CHANGES} uncommitted changes — skipping" >&2
       SKIPPED=$((SKIPPED + 1))

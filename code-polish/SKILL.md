@@ -20,7 +20,35 @@ that the user mentioned or that you edited earlier in this conversation.
 
 ## Phase 2: Four Reviews
 
-Perform the following four reviews with parallel subagents if available, otherwise review sequentially:
+Run four independent reviews on the diff from Phase 1. **You MUST attempt
+parallel subagents first** — only fall back to sequential if the Agent tool
+is unavailable in your session.
+
+### Parallel mode (preferred)
+
+Send **four Agent tool calls in a single message** so they run concurrently.
+Each agent receives the full diff and one review checklist below. Include the
+diff inline in each agent's prompt — agents have no shared context.
+
+```
+Agent({ description: "Code reuse review",   prompt: "<diff>\n\n<Review 1 checklist>" })
+Agent({ description: "Code quality review",  prompt: "<diff>\n\n<Review 2 checklist>" })
+Agent({ description: "Efficiency review",    prompt: "<diff>\n\n<Review 3 checklist>" })
+Agent({ description: "Architecture review",  prompt: "<diff>\n\n<Review 4 checklist>" })
+```
+
+Tell each agent: "Review the following diff for <category>. List findings as
+bullet points — file path, line, what's wrong, how to fix. If the code is
+clean for your category, say so in one line. Do not fix anything — just
+report findings."
+
+### Sequential fallback
+
+If the Agent tool is not available (e.g., the environment does not support
+subagents), perform all four reviews yourself, one after another, in the
+order listed below.
+
+---
 
 ### Review 1: Code Reuse
 
@@ -100,9 +128,10 @@ Review the same changes for structural depth (see `dev-agent/references/deep-mod
 
 ## Phase 3: Fix Issues
 
-Aggregate findings from all four reviews and fix each issue directly.
-If a finding is a false positive or not worth addressing, note it and
-move on — do not argue with the finding, just skip it.
+Aggregate findings from all four reviews (subagent results or your own
+sequential review) and fix each issue directly. If a finding is a false
+positive or not worth addressing, note it and move on — do not argue with
+the finding, just skip it.
 
 When done, briefly summarize what was fixed (or confirm the code was
 already clean).

@@ -393,7 +393,7 @@ if [ -t 0 ]; then
   read -rp "Enable CD verification after merge? [y/N] " cd_choice
   if [[ "${cd_choice:-N}" =~ ^[Yy] ]]; then
     CD_ENABLED=true
-    read -rp "  Verify command (e.g., gcloud builds list ... --format='value(status)'): " CD_VERIFY_CMD
+    read -rp "  Verify command (e.g., gcloud builds list --project=\$PROJECT_ID --region=global --filter=\"substitutions.COMMIT_SHA=\$COMMIT_SHA\" --sort-by=~createTime --limit=1 --format='value(status)'): " CD_VERIFY_CMD
     read -rp "  Success value (e.g., SUCCESS): " CD_SUCCESS
     read -rp "  Pending values, comma-separated (e.g., WORKING,QUEUED): " CD_PENDING_RAW
     CD_PENDING=$(echo "$CD_PENDING_RAW" | jq -R 'split(",") | map(gsub("^\\s+|\\s+$";""))' 2>/dev/null || echo '[]')

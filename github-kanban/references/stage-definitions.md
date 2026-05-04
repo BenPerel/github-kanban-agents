@@ -101,7 +101,7 @@ For autonomous implementation of issues, use `/dev-agent`. It handles the full
 lifecycle: issue selection → worktree → TDD → implementation → PR → in-review.
 
 For autonomous PR review, use `/review-agent`. It handles: review → fix easy
-issues → simplify → merge (simple fixes) or escalate to human review (complex
+issues → code-polish → merge (simple fixes) or escalate to human review (complex
 changes) or request changes (clear problems) → follow-up issues.
 
 This kanban skill handles board operations that those agent skills call into.

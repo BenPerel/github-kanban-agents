@@ -1,14 +1,14 @@
 ---
-name: simplify
+name: code-polish
 description: >
   Review changed code for reuse, quality, efficiency, and architecture, then fix any issues
   found. Use when the user says "simplify", "clean up", "review code quality",
-  or after completing implementation work. Also triggered by /simplify or
+  or after completing implementation work. Also triggered by /code-polish or
   "polish the code".
 compatibility: Requires git.
 ---
 
-# Simplify: Code Review and Cleanup
+# Code Polish: Code Review and Cleanup
 
 Review all changed files for reuse, quality, and efficiency. Fix any issues found.
 

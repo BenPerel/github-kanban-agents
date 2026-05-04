@@ -55,7 +55,7 @@ files — read them when you reach that phase, not all upfront.
 3. **Review the PR** — Diff, tests, security, scope (see `references/review-checklist.md`)
 4. **Verify grounding** — Check domain-specific sources cited in PR
 5. **Fix easy issues** — Trivial fixes directly on the PR branch
-6. **Simplify** — Invoke `/simplify` on changed files
+6. **Code Polish** — Invoke `/code-polish` on changed files
 7. **Decide** — Merge / Escalate / Request changes (see `references/merge-safety.md`)
    - 7d. **Verify deployment** — After merge, monitor CI/CD and confirm deployment
      success (see `references/deployment-verification.md`)
@@ -210,31 +210,31 @@ proceed to Phase 7. Cleanup happens after Phase 6.
 
 Do **not** push yet — Phase 6 may add more commits.
 
-## Phase 6: Simplify
+## Phase 6: Code Polish
 
-After the PR passes review (no blocking findings remaining), invoke `/simplify`
+After the PR passes review (no blocking findings remaining), invoke `/code-polish`
 on the changed files to refine for clarity, consistency, and maintainability.
 Run this inside the same worktree from Phase 5.
 
 If you skipped Phase 5 (no easy fixes) but are merging, create the worktree now
-using the steps from Phase 5 before running `/simplify`.
+using the steps from Phase 5 before running `/code-polish`.
 
-If `/simplify` makes changes, they are committed separately from your Phase 5
-fixes. MUST re-run tests after simplification — even for trivial changes.
+If `/code-polish` makes changes, they are committed separately from your Phase 5
+fixes. MUST re-run tests after code polish — even for trivial changes.
 
-**When to run `/simplify`:** You are merging the PR (Phase 7c path).
+**When to run `/code-polish`:** You are merging the PR (Phase 7c path).
 
-**When to skip `/simplify`:**
+**When to skip `/code-polish`:**
 - You are requesting changes (Phase 7a) — code needs rework
 - You are escalating to human review (Phase 7b) — let the human decide scope
 - The PR is documentation-only
 - The PR is a dependency update
 
-**Multi-PR sessions:** Run `/simplify` for each PR you merge, not just the first.
+**Multi-PR sessions:** Run `/code-polish` for each PR you merge, not just the first.
 
 ### Rebase, push, and cleanup
 
-After Phase 5 fixes and/or Phase 6 simplification, verify the PR is still
+After Phase 5 fixes and/or Phase 6 code polish, verify the PR is still
 clean against the latest base branch before pushing:
 
 1. Rebase onto the latest base branch:
@@ -362,7 +362,7 @@ After completing the review, report a summary:
 - PR link
 - Decision taken (merged / escalated / requested changes)
 - Easy fixes applied (if any)
-- Simplification changes (if any)
+- Code polish changes (if any)
 - Deployment status (if applicable — confirmed success, failed + action taken, or N/A)
 - Follow-up issues filed (if any)
 - Key findings summary

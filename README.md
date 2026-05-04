@@ -1,6 +1,6 @@
 # github-kanban-agents
 
-Autonomous AI agent skills for the full software development lifecycle — powered by a GitHub Projects kanban board. Agents pick up issues, implement with TDD, review PRs, merge, and verify deployment. Includes dev-agent, review-agent, prd-to-issue, diagnose, simplify, and github-kanban skills. Works with Gemini, Claude, and 40+ agents.
+Autonomous AI agent skills for the full software development lifecycle — powered by a GitHub Projects kanban board. Agents pick up issues, implement with TDD, review PRs, merge, and verify deployment. Includes dev-agent, review-agent, prd-to-issue, diagnose, code-polish, and github-kanban skills. Works with Gemini, Claude, and 40+ agents.
 
 ## Installation
 
@@ -26,7 +26,7 @@ gemini skills install https://github.com/BenPerel/github-kanban-agents.git
 git clone https://github.com/BenPerel/github-kanban-agents.git
 ln -s /path/to/github-kanban-agents/dev-agent .gemini/skills/dev-agent
 ln -s /path/to/github-kanban-agents/review-agent .gemini/skills/review-agent
-ln -s /path/to/github-kanban-agents/simplify .gemini/skills/simplify
+ln -s /path/to/github-kanban-agents/code-polish .gemini/skills/code-polish
 ln -s /path/to/github-kanban-agents/prd-to-issue .gemini/skills/prd-to-issue
 ln -s /path/to/github-kanban-agents/diagnose .gemini/skills/diagnose
 # github-kanban requires setup — see below
@@ -118,13 +118,13 @@ Autonomous developer agent that picks up GitHub issues and implements them end-t
 
 Autonomous review agent that picks up PRs from In Review, performs systematic code review, fixes trivial issues, simplifies code, and decides whether to merge, request changes, or escalate to human review. Creates follow-up issues as actionable prompts for other agents.
 
-**Flow:** issue in-review → claim → review → fix easy issues → simplify → merge/escalate/request-changes → follow-up issues
+**Flow:** issue in-review → claim → review → fix easy issues → code-polish → merge/escalate/request-changes → follow-up issues
 
 **Covers:**
 - **Issue selection** — priority-sorted from `stage:in-review`, with PR existence verification
 - **Systematic review** — diff reading, test execution, security scan, scope verification, grounding checks
 - **Easy fixes** — trivial issues (typos, 1-2 line fixes) fixed directly on the PR branch
-- **Code simplification** — invokes `/simplify` on changed files before merge
+- **Code polish** — invokes `/code-polish` on changed files before merge
 - **Three-way decision** — merge (within auto-merge size, all clear), escalate (larger/security/uncertainty), request changes (clear problems)
 - **Solo dev handling** — graceful skip of `gh pr review --approve` when self-review fails
 - **Human re-review** — picks up issues returned to `stage:in-review` after human feedback
@@ -145,11 +145,11 @@ Structured diagnostic methodology for bugs and failures with unclear root cause.
 - **Regression test integration** — flows naturally into the TDD cycle
 - **Escalation criteria** — when to stop diagnosing and escalate to human review
 
-### simplify
+### code-polish
 
 Code review and cleanup skill — reviews changed code for reuse, quality, efficiency, and architecture, then fixes issues found.
 
-**Flow:** identify changes → four parallel reviews (reuse, quality, efficiency, architecture) → fix issues
+**Flow:** identify changes → four reviews (reuse, quality, efficiency, architecture) → fix issues
 
 ## GitHub Actions (optional, free)
 

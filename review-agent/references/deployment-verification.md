@@ -91,33 +91,60 @@ escalate to human review.
 
 **Cloud Build status (check first):**
 ```bash
-gcloud builds list \
+COMMIT_SHA=$(git rev-parse HEAD)  # the merge commit
+
+BUILD_STATUS=$(gcloud builds list \
   --project="$PROJECT_ID" \
   --region=global \
+  --filter="substitutions.COMMIT_SHA=$COMMIT_SHA" \
+  --sort-by="~createTime" \
   --limit=1 \
-  --format='value(status)'
+  --format='value(status)')
 ```
 
 Look for: `SUCCESS`. Pending values: `WORKING`, `QUEUED`, `PENDING`.
 
-**Important:** Do NOT use `gcloud run services describe ...
-status.conditions[0].status` as a deployment check — it returns `True`
-whenever the service is healthy, even if no new revision has deployed.
-Always verify the build/pipeline status first.
+The `--filter` scopes the query to the build triggered by this specific
+merge commit. Without it, `--limit=1` returns the most recent build
+globally, which may be from an unrelated trigger — producing false
+positives or false negatives. For multi-trigger projects, add
+`AND buildTriggerId=$TRIGGER_ID` (store the trigger UUID in
+`.kanban-config.json` under `pipeline.cd`).
+
+**Important — do not use `status.conditions[0].status` (service Ready
+condition) as a deployment check.** This field reflects whether *any*
+healthy revision is currently serving traffic, not whether the *new*
+revision deployed successfully. If Cloud Run rolls back to a previous
+revision after a failed deploy, the service stays `Ready: True` even
+though your code never went live.
+
+`gcloud run services describe` is fine for other purposes — use it
+freely to retrieve `status.url`, `status.latestReadyRevisionName`,
+traffic splits, or any other service metadata. Only avoid treating the
+Ready condition as a deployment-success signal.
 
 **Cloud Run new revision (after build succeeds):**
 ```bash
+# Normalize merge commit timestamp to UTC (required — offset format silently fails)
+MERGE_TS_RAW=$(git log -1 --format="%cI" "$COMMIT_SHA")
+MERGE_TS_UTC=$(date -u -d "$MERGE_TS_RAW" +"%Y-%m-%dT%H:%M:%SZ")
+
+# Find revisions created after the merge
 gcloud run revisions list \
   --service="$SERVICE_NAME" \
   --project="$PROJECT_ID" \
   --region="$REGION" \
-  --limit=3 \
-  --format="table(name,active,status.conditions[0].status,metadata.creationTimestamp)"
+  --filter="metadata.creationTimestamp>$MERGE_TS_UTC" \
+  --sort-by="~metadata.creationTimestamp" \
+  --format="value(metadata.name,metadata.creationTimestamp)"
 ```
 
-Look for: a revision created *after* the merge commit timestamp, with
-`True` for active status and the Ready condition. A pre-existing revision
+Look for: at least one revision in the output. A pre-existing revision
 showing `True` does not confirm the new deployment.
+
+**Do NOT combine `--limit` with `--filter`** for Cloud Run revision
+checks. `--limit` is applied server-side *before* the client-side
+`--filter`, so it can silently exclude the revision you're looking for.
 
 **Cloud Run service logs (last 5 minutes):**
 ```bash
@@ -275,9 +302,9 @@ This is unusual — the PR is already merged. Instead:
 - New revisions take 30-90s to become active
 - Watch for "Container failed to start" in logs — usually missing env var
   or wrong entrypoint
-- Check Cloud Build status first, then confirm a new revision exists —
-  `gcloud run services describe` shows service health, not whether a new
-  revision deployed
+- Check Cloud Build status first (filter by `substitutions.COMMIT_SHA`),
+  then confirm a new revision exists with `metadata.creationTimestamp`
+  after the merge commit
 
 ### Firebase Hosting
 - Deploys are fast (~10s) but may cache old content

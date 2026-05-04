@@ -20,7 +20,51 @@ that the user mentioned or that you edited earlier in this conversation.
 
 ## Phase 2: Four Reviews
 
-Perform the following four reviews with parallel subagents if available, otherwise review sequentially:
+Run four independent reviews on the diff from Phase 1. **You MUST attempt
+parallel subagents first** — only fall back to sequential if the Agent tool
+is unavailable in your session.
+
+### Parallel mode (preferred)
+
+Send **four Agent tool calls in a single message** so they run concurrently.
+Each agent receives the full diff and one review checklist below. Include the
+diff inline in each agent's prompt — agents inherit the working directory
+and all tools but do not see your conversation history.
+
+Build each prompt by concatenating three parts: (1) the preamble below,
+(2) the diff from Phase 1, (3) the review checklist text. Use this
+preamble for every agent (substitute the category name):
+
+> Review the following diff for **<category>**. You have full access to
+> the codebase via tools — use grep, find, and Read to search for existing
+> patterns when needed. List findings as bullet points — file path, line,
+> what's wrong, how to fix. If the code is clean for your category, say so
+> in one line. Do not fix anything — just report findings.
+
+```
+Agent({ description: "Code reuse review",   prompt: "<preamble>\n\n<diff>\n\n<Review 1 checklist>" })
+Agent({ description: "Code quality review",  prompt: "<preamble>\n\n<diff>\n\n<Review 2 checklist>" })
+Agent({ description: "Efficiency review",    prompt: "<preamble>\n\n<diff>\n\n<Review 3 checklist>" })
+Agent({ description: "Architecture review",  prompt: "<preamble>\n\n<diff>\n\n<Review 4 checklist>" })
+```
+
+Replace `<preamble>` with the preamble text above (with the category
+filled in), `<diff>` with the actual `git diff` output from Phase 1, and
+`<Review N checklist>` with the full text of the corresponding review
+section below (e.g., everything under "### Review 1: Code Reuse").
+
+If a subagent fails or returns an empty/garbled result, perform that
+review yourself (sequential fallback) before proceeding to Phase 3.
+
+### Sequential fallback
+
+If the Agent tool is not available (e.g., the environment does not support
+subagents), perform all four reviews yourself, one after another, in the
+order listed below.
+
+---
+
+The following four review checklists are used by both modes:
 
 ### Review 1: Code Reuse
 
@@ -100,9 +144,10 @@ Review the same changes for structural depth (see `dev-agent/references/deep-mod
 
 ## Phase 3: Fix Issues
 
-Aggregate findings from all four reviews and fix each issue directly.
-If a finding is a false positive or not worth addressing, note it and
-move on — do not argue with the finding, just skip it.
+Aggregate findings from all four reviews (subagent results or your own
+sequential review) and fix each issue directly. If a finding is a false
+positive or not worth addressing, note it and move on — do not argue with
+the finding, just skip it.
 
 When done, briefly summarize what was fixed (or confirm the code was
 already clean).

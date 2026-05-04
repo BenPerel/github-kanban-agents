@@ -28,7 +28,8 @@ is unavailable in your session.
 
 Send **four Agent tool calls in a single message** so they run concurrently.
 Each agent receives the full diff and one review checklist below. Include the
-diff inline in each agent's prompt — agents have no shared context.
+diff inline in each agent's prompt — agents inherit the working directory
+and tools (Read, Bash, grep) but do not see your conversation history.
 
 ```
 Agent({ description: "Code reuse review",   prompt: "<diff>\n\n<Review 1 checklist>" })
@@ -37,10 +38,18 @@ Agent({ description: "Efficiency review",    prompt: "<diff>\n\n<Review 3 checkl
 Agent({ description: "Architecture review",  prompt: "<diff>\n\n<Review 4 checklist>" })
 ```
 
-Tell each agent: "Review the following diff for <category>. List findings as
-bullet points — file path, line, what's wrong, how to fix. If the code is
-clean for your category, say so in one line. Do not fix anything — just
-report findings."
+Replace `<diff>` with the actual `git diff` output from Phase 1, and
+`<Review N checklist>` with the full text of the corresponding review
+section below (e.g., everything under "### Review 1: Code Reuse").
+
+Tell each agent: "Review the following diff for <category>. You have full
+access to the codebase via tools — use grep, find, and Read to search for
+existing patterns when needed. List findings as bullet points — file path,
+line, what's wrong, how to fix. If the code is clean for your category,
+say so in one line. Do not fix anything — just report findings."
+
+If a subagent fails or returns an empty/garbled result, perform that
+review yourself (sequential fallback) before proceeding to Phase 3.
 
 ### Sequential fallback
 

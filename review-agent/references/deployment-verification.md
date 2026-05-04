@@ -89,18 +89,35 @@ escalate to human review.
 
 ### Check methods (use all that apply):
 
-**Cloud Run revision status:**
+**Cloud Build status (check first):**
+```bash
+gcloud builds list \
+  --project="$PROJECT_ID" \
+  --region=global \
+  --limit=1 \
+  --format='value(status)'
+```
+
+Look for: `SUCCESS`. Pending values: `WORKING`, `QUEUED`, `PENDING`.
+
+**Important:** Do NOT use `gcloud run services describe ...
+status.conditions[0].status` as a deployment check — it returns `True`
+whenever the service is healthy, even if no new revision has deployed.
+Always verify the build/pipeline status first.
+
+**Cloud Run new revision (after build succeeds):**
 ```bash
 gcloud run revisions list \
   --service="$SERVICE_NAME" \
   --project="$PROJECT_ID" \
   --region="$REGION" \
   --limit=3 \
-  --format="table(name,active,status.conditions[0].status)"
+  --format="table(name,active,status.conditions[0].status,metadata.creationTimestamp)"
 ```
 
-Look for: latest revision shows `True` for active status and `True` for
-the Ready condition.
+Look for: a revision created *after* the merge commit timestamp, with
+`True` for active status and the Ready condition. A pre-existing revision
+showing `True` does not confirm the new deployment.
 
 **Cloud Run service logs (last 5 minutes):**
 ```bash
@@ -142,9 +159,9 @@ Look for: 200 response.
 
 Deployment is confirmed successful when **all** of the following are true:
 
-- [ ] CI/CD pipeline completed with success status
-- [ ] Latest Cloud Run revision is active and Ready (or equivalent for
-      the platform)
+- [ ] Build/pipeline completed with success status
+- [ ] A *new* revision is active and Ready — created after the merge
+      (or equivalent for the platform)
 - [ ] No ERROR/CRITICAL log entries in the post-deployment window
 - [ ] Health check returns 200 (if applicable)
 
@@ -258,7 +275,9 @@ This is unusual — the PR is already merged. Instead:
 - New revisions take 30-90s to become active
 - Watch for "Container failed to start" in logs — usually missing env var
   or wrong entrypoint
-- `gcloud run services describe` shows the latest ready revision
+- Check Cloud Build status first, then confirm a new revision exists —
+  `gcloud run services describe` shows service health, not whether a new
+  revision deployed
 
 ### Firebase Hosting
 - Deploys are fast (~10s) but may cache old content

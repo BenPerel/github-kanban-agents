@@ -70,8 +70,9 @@ case "${ACTION}" in
     fi
 
     # Safety: refuse if uncommitted changes exist
+    # Use -uno to ignore untracked files (e.g., symlinks from .worktreelinks)
     if [[ -d "${WORKTREE_PATH}" ]]; then
-      CHANGES=$(git -C "${WORKTREE_PATH}" status --porcelain 2>/dev/null | wc -l || echo "0")
+      CHANGES=$(git -C "${WORKTREE_PATH}" status --porcelain -uno 2>/dev/null | wc -l || echo "0")
       if [[ "${CHANGES}" -gt 0 ]]; then
         echo "ERROR: ${CHANGES} uncommitted changes in worktree." >&2
         echo "Commit, stash, or re-run with 'keep' instead." >&2

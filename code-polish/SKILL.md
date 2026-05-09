@@ -151,3 +151,7 @@ the finding, just skip it.
 
 When done, briefly summarize what was fixed (or confirm the code was
 already clean).
+
+**This skill is a sub-task.** After summarizing, return to the invoking
+workflow and continue with its next phase. Do NOT stop or report — the
+calling skill has remaining phases that depend on your output.

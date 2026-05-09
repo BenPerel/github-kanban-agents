@@ -56,6 +56,7 @@ files — read them when you reach that phase, not all upfront.
 4. **Verify grounding** — Check domain-specific sources cited in PR
 5. **Fix easy issues** — Trivial fixes directly on the PR branch
 6. **Code Polish** — Invoke `/code-polish` on changed files
+   6b. **Rebase, push, and cleanup** — Rebase onto latest base, push, exit worktree
 7. **Decide** — Merge / Escalate / Request changes (see `references/merge-safety.md`)
    - 7d. **Verify deployment** — After merge, monitor CI/CD and confirm deployment
      success (see `references/deployment-verification.md`)
@@ -222,6 +223,10 @@ using the steps from Phase 5 before running `/code-polish`.
 If `/code-polish` makes changes, they are committed separately from your Phase 5
 fixes. MUST re-run tests after code polish — even for trivial changes.
 
+**CHECKPOINT: Code polish is a sub-step, not an endpoint.** After code
+polish completes, you MUST continue with the rebase/push steps below and
+then proceed to Phase 7 (Decision). Do NOT stop here.
+
 **When to run `/code-polish`:** You are merging the PR (Phase 7c path).
 
 **When to skip `/code-polish`:**
@@ -232,7 +237,7 @@ fixes. MUST re-run tests after code polish — even for trivial changes.
 
 **Multi-PR sessions:** Run `/code-polish` for each PR you merge, not just the first.
 
-### Rebase, push, and cleanup
+## Phase 6b: Rebase, Push, and Cleanup
 
 After Phase 5 fixes and/or Phase 6 code polish, verify the PR is still
 clean against the latest base branch before pushing:
